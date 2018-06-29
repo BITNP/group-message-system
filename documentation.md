@@ -49,6 +49,7 @@ mysql
 | user | 查询，修改 | 后端    |
 
 - 权限设置语句
+
 ```sql
 GRANT Select,UPDATE ON
  groupMessage.User TO user@'localhost' identified by "your-password" ;
@@ -73,6 +74,7 @@ remark|备注信息|varchar(1000)||NOT NULL||
 
 
 - 数据库生成语句
+
 ```sql
 create database groupMessage 
 CHARACTER SET 'utf8'
