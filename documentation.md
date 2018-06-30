@@ -25,6 +25,12 @@ mysql
   - 记录群发内容（证据留存）
   - 与外界api交互
   - 轮询外网获得反馈数据
+- 目前开发的功能
+  - 单条发送
+  - 批量模板群发
+  - 接受推送回复短信
+  - 按用户添加，查询，修改，删除模板
+  - 查看当前使用费用
 
 ## 后端处理逻辑
 
@@ -38,24 +44,33 @@ mysql
 ## 后端数据库
 
 - 权限 ： 
-  - 客户端只有查询权限（防止注入
+  - 客户端只有查询和插入和更改的权限（防止注入
   - 账号的添加等操作需要网协手动处理
 
 
-| 用户   | 权限    | 使用者   |
-|------|-------|-------|
-| --   | --    | --    |
-| root | 完全    | 管理者界面 |
-| user | 查询，修改 | 后端    |
+| 用户   | 权限       | 使用者   |
+|------|----------|-------|
+| --   | --       | --    |
+| root | 完全       | 管理者界面 |
+| user | 查询，修改，插入 | 后端    |
+
+- 逻辑
+
+用户表存放着用户相关信息，方便后端区分用户。
+每个用户又拥有一个发送记录表，和群发信息表。
+短信的具体内容都存在前者；如果是群发，则后者存放所有对应手机号和发送情况，并存储回复情况
+extend 就是用户的主键，
+uid 是每次的id，就是第二个表的主键
+
 
 - 权限设置语句
 
 ```sql
 GRANT Select,UPDATE ON
- groupMessage.User TO user@'localhost' identified by "your-password" ;
+ groupMessage.* TO user@'localhost' identified by "your-password" ;
  -- 为啥docker的话不能用localhost？下面是docker的地址
  GRANT Select,UPDATE ON
- groupMessage.User TO user@'172.17.0.1' identified by "your-password" ;
+ groupMessage.* TO user@'172.17.0.1' identified by "your-password" ;
 
  flush privileges;
 ```
@@ -64,21 +79,44 @@ GRANT Select,UPDATE ON
 
 `User`
 
-| 列名        | 用途   | 数据类型          | 默认值  | 约束                          | 备注 |
-|-----------|------|---------------|------|-----------------------------|----|
-| id        | 唯一标识 | int(10)       |      | AUTO INCREAMENT PRIVATE KEY |    |
-| username  | 用户信息 | varchar(30)   | NULL | NOT NULL                    |    |
-| password  |      | char(32)      | NULL | NOTNULL                     |    |
-| extend    | 区别用户 | int(10)       | NULL |                             |    |
-| uid       | 区别用户 | int(10)       | NULL |                             |    |
-| tplIDList | 模板id | varchar(1000) | ''   |                             |    |
-createTime|该信息生成时间|DATETIME|CURRENT_TIMESTAMP	||该行插入时间
-remark|备注信息|varchar(1000)||NOT NULL||
+| 列名         | 用途      | 数据类型          | 默认值               | 约束                          | 备注          |
+|------------|---------|---------------|-------------------|-----------------------------|-------------|
+| id         | 唯一标识    | BIGINT        |                   | AUTO INCREAMENT PRIMARY KEY | 就当做extend值？ |
+| username   | 用户信息    | varchar(45)   | NULL              | NOT NULL                    |             |
+| password   |         | char(32)      | NULL              | NOT NULL                    |             |
+| fee        | 总计花费    | DECIMAL(10,2) | 0                 | NOT NULL                    |             |
+| tplIDList  | 模板id    | varchar(1000) | ''                |                             |             |
+| fee        | 总花费       | DECIMAL(10,2) | 0.0               | NOT NULL                    |                |
+| paid       | 已缴费        | DECIMAL(10,2) | 0.0               | NOT NULL                    |                |
+| createTime | 该信息生成时间 | DATETIME      | CURRENT_TIMESTAMP |                             |             |
+| remark     | 备注信息    | varchar(1000) |                   | NOT NULL                    |             |
 
-`data-`+`在数据库中的id`+`某个唯一标识`
+`SendStat`
+| 列名         | 用途         | 数据类型          | 默认值               | 约束                          | 备注             |
+|------------|------------|---------------|-------------------|-----------------------------|----------------|
+| mid        | 唯一标识       | INT           |                   | AUTO INCREAMENT PRIMARY KEY | 仅在数据库中使用       |
+| id         | 区分用户       | INT           |                   | NOT NULL 外键约束               | User表中id       |
+| uid        | 区分批次       | INT           |   NULL     |     NOT NULL                  | GroupData 中 使用 |
+| createTime | 生成时间       | DATETIME      | CURRENT_TIMESTAMP |                             |                |
+| content    | 短信内容       | text(1000)    |                   |                             |                |
+| fee        | 这次花费       | DECIMAL(10,2) | 0.0               | NOT NULL                    |                |
+| count      | 计数         | INT           | 1                 |                             |                |
+| mobile     | 单个发送中的手机号  | char(11)      |                   |                             |                |
+| sid        | 单个发送中的sid  | BIGINT        |                   |                             | 来自api          |
+| code       | 单个发送中的发送状态 | int           |                   |                             |                |
+| msg        | 单个发送中的信息   | varchar(500)  |                   |                             |                |
 
-| 列名        | 用途   | 数据类型          | 默认值  | 约束                          | 备注 |
-|-----------|------|---------------|------|-----------------------------|----|
+`GroupData`
+
+| 列名     | 用途       | 数据类型          | 默认值  | 约束              | 备注        |
+|--------|----------|---------------|------|-----------------|-----------|
+| sid    | 唯一标识     | BIGINT        |      | PRIMARY KEY     | 与api返回值相同 |
+| id     | 区分用户     | INT           |      | NOT NULL 外键约束   | User表中id  |
+| uid    | 表示分类     | INT           |      | NOT NULL   外键约束 | 来自上文      |
+| mobile | 手机号      |               |      |                 |           |
+| code   | 发送状态     | INT           | NULL |                 | 与api返回值相同 |
+| fee    | 费用       | DECIMAL(10,2) |      |                 |           |
+| msg    | 单个发送中的信息 | varchar(500)  |      |                 |           |
 
 - 数据库生成语句
 
@@ -93,11 +131,16 @@ create table User(
   id int(10) Primary key not null AUTO_INCREMENT ,
   username varchar(30) NOT NULL,
   password char(32) NOT NULL,
-  extend int(10),
-  uid int(10),
+  fee DECIMAL(10,2) DEFAULT 0,
   tplIDList varchar(1000) DEFAULT '',
   createTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   remark varchar(1000) NOT NULL
+)DEFAULT CHARSET=utf8;
+
+
+create table User(
+  uid INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+  createTime 
 )DEFAULT CHARSET=utf8;
 
 -- 测试数据
@@ -113,6 +156,8 @@ remark)
 VALUE
 ('shetuan1','md6',
 0,02,'random group');
+
+
 ```
 `数据库建立于2018-06-29 22:47:41测试通过`
 
@@ -140,19 +185,19 @@ VALUE
 
 ## 前端->后端 api 用`request_code`字段
 
-|值|含义|后端需要做的处理|需求
-|--|--|---|
-|1|单条发送|`https://sms.yunpian.com/v2/sms/single_send.json`|uid,extend,mobile,text|
-|2.1|获取默认模板|`https://sms.yunpian.com/v2/tpl/get_default.json`
-|2.2|获取模板|`https://sms.yunpian.com/v2/tpl/get.json`|[tpl_id]
-|2.3|添加模版|`https://sms.yunpian.com/v2/tpl/add.json`|tpl_content
-|2.4|修改模板|
-|2.5|删除模板|
-|3.1|添加签名|
-|3.2|获取签名|
-|3.3|修改签名|
-|4|查看短信发送记录|`https://sms.yunpian.com/v2/sms/get_record.json`
-|7|日账单导出|`https://sms.yunpian.com/v2/sms/get_total_fee.json`|[date]
+| 值   | 含义       | 后端需要做的处理                                            |                        |
+|-----|----------|-----------------------------------------------------|------------------------|
+| 1   | 单条发送     | `https://sms.yunpian.com/v2/sms/single_send.json`   | uid,extend,mobile,text |
+| 2.1 | 获取默认模板   |                                                     |                        |
+| 2.2 | 获取模板     | `https://sms.yunpian.com/v2/tpl/get.json`           |                        |
+| 2.3 | 添加模版     | `https://sms.yunpian.com/v2/tpl/add.json`           |                        |
+| 2.4 | 修改模板     |                                                     |                        |
+| 2.5 | 删除模板     |                                                     |                        |
+| 3.1 | 添加签名     |                                                     |                        |
+| 3.2 | 获取签名     |                                                     |                        |
+| 3.3 | 修改签名     |                                                     |                        |
+| 4   | 查看短信发送记录 |                                                     |                        |
+| 7   | 日账单导出    | `https://sms.yunpian.com/v2/sms/get_total_fee.json` |                        |
 
 ## 一些注意事项
 
