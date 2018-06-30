@@ -149,15 +149,15 @@ VALUE
 |3.2|获取签名|
 |3.3|修改签名|
 |4|查看短信发送记录|`https://sms.yunpian.com/v2/sms/get_record.json`
-|7|日账单导出|`https://sms.yunpian.com/v2/sms/get_total_fee.json`
+|7|日账单导出|`https://sms.yunpian.com/v2/sms/get_total_fee.json`|[date]
 ## 项目进度
 
 - 2018-06-29
   - GUI 采用 QT 进行了初步学习，基本梳理了逻辑
   - api 研读了文档，进行测试，大致掌握方法
   - 后端
-    - 数据库 的设计已经完成，但是没有考虑`中间人`
+    - 数据库 的设计已经完成，但是还没有考虑`中间人`安全问题
     - httpserver 基本搭建成功，利用 http.server模块，使后端具有服务能力
 - 2018-06-30
   - 加入数据库验证
-
+  - 后端基本逻辑完成
