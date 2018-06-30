@@ -53,6 +53,9 @@ mysql
 ```sql
 GRANT Select,UPDATE ON
  groupMessage.User TO user@'localhost' identified by "your-password" ;
+ -- 为啥docker的话不能用localhost？下面是docker的地址
+ GRANT Select,UPDATE ON
+ groupMessage.User TO user@'172.17.0.1' identified by "your-password" ;
 
  flush privileges;
 ```
@@ -132,11 +135,29 @@ VALUE
 
 因此后端既是一个api server，也是数据库的执行者，也封装了api 的调用，还是日志记录的程序
 
+## 前端->后端 api 用`request_code`字段
+
+|值|含义|后端需要做的处理|需求
+|--|--|---|
+|1|单条发送|`https://sms.yunpian.com/v2/sms/single_send.json`|uid,extend,mobile,text|
+|2.1|获取默认模板|`https://sms.yunpian.com/v2/tpl/get_default.json`
+|2.2|获取模板|`https://sms.yunpian.com/v2/tpl/get.json`|[tpl_id]
+|2.3|添加模版|
+|2.4|修改模板|
+|2.5|删除模板|
+|3.1|添加签名|
+|3.2|获取签名|
+|3.3|修改签名|
+|4|查看短信发送记录|`https://sms.yunpian.com/v2/sms/get_record.json`
+|7|日账单导出|`https://sms.yunpian.com/v2/sms/get_total_fee.json`
 ## 项目进度
 
-- 2018-06-30
+- 2018-06-29
   - GUI 采用 QT 进行了初步学习，基本梳理了逻辑
   - api 研读了文档，进行测试，大致掌握方法
   - 后端
     - 数据库 的设计已经完成，但是没有考虑`中间人`
     - httpserver 基本搭建成功，利用 http.server模块，使后端具有服务能力
+- 2018-06-30
+  - 加入数据库验证
+
