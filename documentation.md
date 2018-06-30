@@ -75,7 +75,10 @@ GRANT Select,UPDATE ON
 createTime|该信息生成时间|DATETIME|CURRENT_TIMESTAMP	||该行插入时间
 remark|备注信息|varchar(1000)||NOT NULL||
 
+`data-`+`在数据库中的id`+`某个唯一标识`
 
+| 列名        | 用途   | 数据类型          | 默认值  | 约束                          | 备注 |
+|-----------|------|---------------|------|-----------------------------|----|
 
 - 数据库生成语句
 
