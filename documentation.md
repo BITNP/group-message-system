@@ -142,7 +142,7 @@ VALUE
 |1|单条发送|`https://sms.yunpian.com/v2/sms/single_send.json`|uid,extend,mobile,text|
 |2.1|获取默认模板|`https://sms.yunpian.com/v2/tpl/get_default.json`
 |2.2|获取模板|`https://sms.yunpian.com/v2/tpl/get.json`|[tpl_id]
-|2.3|添加模版|
+|2.3|添加模版|`https://sms.yunpian.com/v2/tpl/add.json`|tpl_content
 |2.4|修改模板|
 |2.5|删除模板|
 |3.1|添加签名|
@@ -150,6 +150,12 @@ VALUE
 |3.3|修改签名|
 |4|查看短信发送记录|`https://sms.yunpian.com/v2/sms/get_record.json`
 |7|日账单导出|`https://sms.yunpian.com/v2/sms/get_total_fee.json`|[date]
+
+## 一些注意事项
+
+- 传送中文时要指明使用`.encode('utf-8')`
+- 若传入是json但是不是字典呢？
+
 ## 项目进度
 
 - 2018-06-29

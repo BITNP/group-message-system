@@ -24,7 +24,39 @@ start_time = '2018-06-11 00:00:00'
 end_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 
 
-def process_resquest(dict_data):
+def tplIDList2list(tpl: str):
+    return tpl.split(',')
+
+
+def list2tplIDList(li: list):
+    li = [str(i) for i in li]
+    return ','.join(li)
+
+
+def get_info_from_database(uname, pword):
+    """
+    Docstring here.
+
+        :param uname: 
+        :param pword:
+        :ret 元组 或 None 
+    """
+    cur = conn.cursor()
+    query_statement = 'SELECT username,password,id,extend,uid,tplIDList from User where username = %s and password = %s limit 1'
+    cur.execute(query_statement, (uname, pword))
+    return cur.fetchone()
+
+def update_tpl_from_database(newList,id):
+
+    cur = conn.cursor()
+    print(newList,id)
+    update_statement = 'UPDATE User set tplIDList= %s WHERE id = %s'
+    affect_row_num = cur.execute(update_statement,(newList,id))
+    conn.commit()
+    cur.close()
+    return affect_row_num
+
+def process_resquest(dict_data, tplIDList, user_id):
     code = str(dict_data['request_code'])
     if code == '4':
         response = requests.post(
@@ -35,12 +67,38 @@ def process_resquest(dict_data):
     elif code == '2.2':
         response = requests.post(
             'https://sms.yunpian.com/v2/tpl/get.json', data=dict_data)
+        # 按照tplIDList 处理 TODO
+        tpl = tplIDList2list(tplIDList)
+        # 没有处理异常 TODO
+        result = response.json()
+
+        # if 'http_status_code' in result: # api调用正确，但有其他错误
+        #     return json.dumps(result,ensure_ascii=False)
+        result = list(filter(lambda x: x['tpl_id'] in tpl, result))
+        return json.dumps(result, ensure_ascii=False)
+
+    elif code == '2.3':
+        response = requests.post(
+            'https://sms.yunpian.com/v2/tpl/add.json', data=dict_data)
+        tpl = tplIDList2list(tplIDList)
+        # 没有异常处理 TODO
+        dict_result = response.json()
+
+        if 'http_status_code' in dict_result:  # api调用正确，但有其他错误
+            return json.dumps(dict_result, ensure_ascii=False)
+        
+        print(dict_result)
+        tpl.append(dict_result['tpl_id'])
+        affect_row_num = update_tpl_from_database(list2tplIDList(tpl),user_id)
+        print(affect_row_num)
+        return json.dumps(dict_result, ensure_ascii=False)
+
     elif code == '7':
         response = requests.post(
             'https://sms.yunpian.com/v2/sms/get_total_fee.json', data=dict_data)
     else:
         return None
-    return response
+    return response.text
 
 
 class MyRequestHandler(BaseHTTPRequestHandler):
@@ -111,15 +169,11 @@ class MyRequestHandler(BaseHTTPRequestHandler):
             return
 
         # 防注入 TODO
-        query_statement = 'SELECT username,password,extend,uid,tplIDList from User where username = '+'"'+str(dict_data['username'])+'"' + \
-            'and password  = '+'"'+str(dict_data['password'])+'" limit 1'
-        print(query_statement)
-        conn.query(query_statement)
 
-        result = conn.use_result()
-        res = result.fetch_row()
-        if len(res) > 0:
-            *_, user_extend, user_uid, user_tplIDList = res[0]
+        res = get_info_from_database(str(dict_data['username']),str(dict_data['password']))
+
+        if res is not None :
+            *_, user_id, user_extend, user_uid, user_tplIDList = res
             print(user_extend, user_tplIDList)
             print('验证成功')
 
@@ -134,17 +188,18 @@ class MyRequestHandler(BaseHTTPRequestHandler):
 
         # step 3 : 如果有需要，过滤响应结果并返回；如果没有需要，直接返回
 
-        dict_data.update(dict(apikey=apikey))
+        dict_data.update(dict(apikey=apikey, user_id=user_id))
         print(dict_data)
-        response = process_resquest(dict_data)
-        if response == None:
+        response_text = process_resquest(
+            dict_data, user_tplIDList, user_id=user_id)
+        if response_text is None:
             self._set_headers(False)
             self.wfile.write(
                 '{"code":254,"msg":"error request_code"}'.encode('utf-8'))
             return
-        print(response.text)
+        print(response_text)
         self._set_headers()
-        self.wfile.write(response.text.encode('utf-8'))  # 向前端回传数据的格式
+        self.wfile.write(response_text.encode('utf-8'))  # 向前端回传数据的格式
 
 
 def run(server_class=HTTPServer, handler_class=MyRequestHandler):
