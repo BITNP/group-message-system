@@ -24,7 +24,6 @@ CREATE TABLE IF NOT EXISTS `groupMessage`.`User` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `username` VARCHAR(45) NOT NULL,
   `password` CHAR(32) NOT NULL,
-  `tplIDList` VARCHAR(1000) NULL DEFAULT '',
   `fee` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   `paid` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   `createTime` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
@@ -39,9 +38,8 @@ ENGINE = InnoDB;
 DROP TABLE IF EXISTS `groupMessage`.`SendStat` ;
 
 CREATE TABLE IF NOT EXISTS `groupMessage`.`SendStat` (
-  `pid` INT NOT NULL,
-  `id` INT NULL,
   `extend` INT NOT NULL AUTO_INCREMENT,
+  `id` INT NULL,
   `ext` CHAR(32) NULL COMMENT '保留\n',
   `createTime` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
   `param` TEXT(500) NULL,
@@ -54,7 +52,7 @@ CREATE TABLE IF NOT EXISTS `groupMessage`.`SendStat` (
   `sid` BIGINT NULL,
   `result` INT NULL,
   `errmsg` VARCHAR(500) NULL,
-  PRIMARY KEY (`pid`),
+  PRIMARY KEY (`extend`),
   INDEX `fk_SendStat_1_idx` (`id` ASC),
   CONSTRAINT `fk_SendStat_1`
     FOREIGN KEY (`id`)
@@ -80,16 +78,10 @@ CREATE TABLE IF NOT EXISTS `groupMessage`.`GroupData` (
   `fee` DECIMAL(10,2) NULL DEFAULT 0.00,
   `errmsg` VARCHAR(500) NULL,
   INDEX `fk_GroupData_1_idx` (`id` ASC),
-  INDEX `fk_GroupData_2_idx` (`extend` ASC),
   PRIMARY KEY (`pid`),
   CONSTRAINT `fk_GroupData_1`
     FOREIGN KEY (`id`)
     REFERENCES `groupMessage`.`User` (`id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION,
-  CONSTRAINT `fk_GroupData_2`
-    FOREIGN KEY (`extend`)
-    REFERENCES `groupMessage`.`SendStat` (`pid`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;

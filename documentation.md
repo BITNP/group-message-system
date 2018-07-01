@@ -85,7 +85,6 @@ GRANT Select,UPDATE ON
 | id         | 唯一标识    | BIGINT        |                   | AUTO INCREAMENT PRIMARY KEY | 就当做extend值？ |
 | username   | 用户信息    | varchar(45)   | NULL              | NOT NULL                    |             |
 | password   |         | char(32)      | NULL              | NOT NULL                    |             |
-| tplIDList  | 模板id    | varchar(1000) | ''                |                             |             |
 | fee        | 总记花费    | DECIMAL(10,2) | 0.0               | NOT NULL                    |             |
 | paid       | 已缴费     | DECIMAL(10,2) | 0.0               | NOT NULL                    |             |
 | createTime | 该信息生成时间 | DATETIME      | CURRENT_TIMESTAMP |                             |             |
@@ -95,9 +94,8 @@ GRANT Select,UPDATE ON
 
 | 列名         | 用途         | 数据类型          | 默认值               | 约束                          | 备注                                                 |
 |------------|------------|---------------|-------------------|-----------------------------|----------------------------------------------------|
-| pid        | 唯一标识       | INT           |                   | AUTO INCREAMENT PRIMARY KEY | 仅在数据库中使用                                           |
+| extend     | 区分批次       | INT           | NULL              | PK NOT NULL   AUTO INCREMENT   | GroupData 中使用，所有的用户共用一套自增的，等同于extend，另外，需要注意最多只有三位 |
 | id         | 区分用户       | INT           |                   | NOT NULL 外键约束               | User表中id                                           |
-| extend     | 区分批次       | INT           | NULL              | NOT NULL   AUTO INCREMENT   | GroupData 中使用，所有的用户共用一套自增的，等同于extend，另外，需要注意最多只有三位 |
 | ext        | 保留         | char(32)      |                   |                             | 用户的 session 内容，腾讯 server 回包中会原样返回                  |
 | createTime | 生成时间       | DATETIME      | CURRENT_TIMESTAMP |                             |                                                    |
 | param      | 模板短信的参数    | text(500)     |                   |                             | 不同内容用逗号隔开                                          |
