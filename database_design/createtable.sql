@@ -28,7 +28,8 @@ CREATE TABLE IF NOT EXISTS `groupMessage`.`User` (
   `paid` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   `createTime` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
   `remark` VARCHAR(1000) NOT NULL,
-  PRIMARY KEY (`id`))
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `username_UNIQUE` (`username` ASC))
 ENGINE = InnoDB;
 
 
@@ -73,6 +74,7 @@ CREATE TABLE IF NOT EXISTS `groupMessage`.`GroupData` (
   `id` INT NOT NULL,
   `extend` INT NOT NULL,
   `createTime` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `param` TEXT(500) NULL,
   `mobile` CHAR(13) NULL,
   `result` INT NULL,
   `fee` DECIMAL(10,2) NULL DEFAULT 0.00,

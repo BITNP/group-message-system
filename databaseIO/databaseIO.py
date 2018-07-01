@@ -163,7 +163,7 @@ class databaseIO:
         """
         获得最大的Extend值
             :param self: 
-        """   
+        """
         self._connect()
 
         cur = self.conn.cursor()
@@ -185,85 +185,81 @@ class databaseIO:
         fee, paid, *_ = self.getUserInfo(id)
         return fee-paid
 
-    def SendSingle(self, id: int, mobile: str,ext,param:list, tpl_id:None,content:str,fee:float,count:int,totalCount:int,text: str,mobile:str,sid:str):
-
+    def SendSingle(self, id: int, mobile: str, ext, param: list, tpl_id: None, content: str, fee: float, totalCount: int, sid: str, result: int, errmsg: str):
+        """
+        发送单条信息后调用
+            :param self: 
+            :param id:int: 
+            :param mobile:str: 
+            :param ext: 可空
+            :param param:list: list形式，将转为字符串 
+            :param tpl_id:None: 与后者二选一
+            :param content:str: 
+            :param fee:float: 
+            :param totalCount:int: 
+            :param sid:str: 必填
+            :param result:int: 填写
+            :param errmsg:str:
+        """
         self._connect()
 
         cur = self.conn.cursor()
         res = cur.execute(
-            'Insert into SendStat(id,ext,param,tpl_id,content,fee,count,totalCount,mobile,sid,result,errmsg) '+
+            'Insert into SendStat(id,ext,param,tpl_id,content,fee,count,totalCount,mobile,sid,result,errmsg) ' +
             'values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
-             (id,ext,param,tpl_id,content,fee,count,totalCount,mobile,sid,result,errmsg))
-        self.conn.commit()
-        cur.close()
-
-        self._close()
-        return next_uid  # 返回 uid
-
-    def SendSingle(self, id, uid, fee, sid, code, msg, count):
-        self._connect()
-
-        cur = self.conn.cursor()
-        res = cur.execute(
-            'update SendStat set fee=%s,sid=%s,code=%s,msg=%s,totalCount=%s where id = %s and uid = %s', (
-                fee, sid, code, msg, count, id, uid)
+            (id, ext, str(param), tpl_id, content, fee, 1, totalCount, mobile, sid, result, errmsg))
+        cur.execute(
+            'UPDATE User SET fee=User.fee+%s WHERE id = %s',
+            (fee, id)
         )
-        res = cur.execute(
-            'update User set fee=User.fee+%s where id = %s', (fee, id))
         self.conn.commit()
         cur.close()
 
         self._close()
         return res  # 返回 uid
 
-    def beforeSendMulti(self, id, mobile_list: list, text):
-        next_uid = self.getUserHighestUid(id)+1  # 函数内对conn的操作有影响 TODO
-
+    def SendMulti(self, id: int, ext:str, tpl_id:int, content:str, fee:float, totalCount:int, data_list: list):
+        """
+        发送多个后调用
+            :param self: 
+            :param id:int: 
+            :param ext:str: 
+            :param tpl_id:int:
+            :param content:str: 
+            :param fee:float: 
+            :param totalCount:int: 
+            :param data_list:list: 字典列表，包括 sid,param,mobile,result,fee,errmsg
+            :ret: 插入行数
+        """ 
+        extend = self.getUserHighestExtend()+1
         self._connect()
 
         cur = self.conn.cursor()
 
-        res = cur.execute(
-            'Insert into SendStat(id,uid,count,content) values(%s,%s,%s,%s)', (id, next_uid, len(mobile_list), text))
-
-        multi_info = [(id, next_uid, i) for i in mobile_list]
-
-        res = cur.executemany(
-            'INSERT into GroupData(id,uid,mobile) values(%s,%s,%s)', multi_info
-        )
-        self.conn.commit()
-        cur.close()
-
-        self._close()
-        return next_uid  # 返回 uid
-
-    def afterSendMulti(self, id, uid, total_count, total_fee, data: list):
-        self._connect()
-
-        cur = self.conn.cursor()
-
-        res = cur.execute(
-            'update SendStat set fee=%s,totalCount= %s where id = %s and uid = %s', (
-                total_fee, total_count, id, uid)
-        )
-
-        multi_info = [
-            (i['code'], i['msg'], i['fee'], i['sid'], id, uid, i['mobile']) for i in data
+        cur.execute(
+            'Insert into SendStat(id,ext,tpl_id,content,fee,count,totalCount) values(%s,%s,%s,%s,%s,%s,%s)',
+            (id,ext,tpl_id,content,fee,len(data),totalCount)
+            )
+        multi_info = [ (id,extend,i['mobile'],i['sid'],i['result'],i['fee'],i['errmsg'])
         ]
-        cur.executemany(
-            'update GroupData set code = %s,msg = %s, fee = %s,sid =%s where id = %s and uid = %s and mobile = %s',
-            multi_info
+        res = cur.executemany(
+            'INSERT into GroupData(id,extend,mobile,sid,result,fee,errmsg) values(%s,%s,%s,%s,%s,%s)',
+             multi_info
         )
-        res = cur.execute(
-            'update User set fee=User.fee+%s where id = %s', (total_fee, id))
         self.conn.commit()
-
         cur.close()
 
         self._close()
-        return
+        return res
 
     def InsertUser(self, username: str, password: str, remark: str):
+        """
+        插入用户，管理员使用
+            :param self: 
+            :param username:str: 
+            :param password:str: 
+            :param remark:str: 
+        """   
         self._connect()
 
         cur = self.conn.cursor()
@@ -292,6 +288,8 @@ if __name__ == '__main__':
     # run.addUserTpl(2,22433234,'hhhh',0,'success',0,ifpublic=0)
     # run.deleteUserTpl(2,2324)
     # run.addUserPaid(1, 0.04)
+    run.SendSingle(1, '123', '', None, 22433234, '',
+                   0.04, 3, 3, 'aasdf', 1, 'suc')
     print(run.getUserHighestExtend())
     print(run.checkUserBalance(1))
     # uid = (run.beforeSendSingle(1, '1123', 'hh'))

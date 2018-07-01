@@ -92,32 +92,33 @@ GRANT Select,UPDATE ON
 
 `SendStat`
 
-| 列名         | 用途         | 数据类型          | 默认值               | 约束                          | 备注                                                 |
-|------------|------------|---------------|-------------------|-----------------------------|----------------------------------------------------|
-| extend     | 区分批次       | INT           | NULL              | PK NOT NULL   AUTO INCREMENT   | GroupData 中使用，所有的用户共用一套自增的，等同于extend，另外，需要注意最多只有三位 |
-| id         | 区分用户       | INT           |                   | NOT NULL 外键约束               | User表中id                                           |
-| ext        | 保留         | char(32)      |                   |                             | 用户的 session 内容，腾讯 server 回包中会原样返回                  |
-| createTime | 生成时间       | DATETIME      | CURRENT_TIMESTAMP |                             |                                                    |
-| param      | 模板短信的参数    | text(500)     |                   |                             | 不同内容用逗号隔开                                          |
-| tpl_id     | 模板短信的模板id  | BIGINT        |                   |                             |                                                    |
-| content    | 短信内容       | varchar(500)  |                   |                             | 如果没有使用模板发送这个值必填                                    |
-| fee        | 这次花费       | DECIMAL(10,2) | 0.0               | NOT NULL                    |                                                    |
-| count      | 计数         | INT           | 1                 |                             | 后端统计发送的数量，与下面的对照                                   |
-| totalCount | 计数         | INT           | 1                 |                             | api 返回的统计结果，只统计成功的                                 |
-| mobile     | 单个发送中的手机号  | char(11)      |                   |                             |                                                    |
-| sid        | 单个发送中的sid  | char(32)        |                   |                             | 来自api                                              |
-| result     | 单个发送中的发送状态 | int           |                   |                             |                                                    |
-| errmsg     | 单个发送中的信息   | varchar(500)  |                   |                             |                                                    |
+| 列名         | 用途         | 数据类型          | 默认值               | 约束                           | 备注                                                 |
+|------------|------------|---------------|-------------------|------------------------------|----------------------------------------------------|
+| extend     | 区分批次       | INT           | NULL              | PK NOT NULL   AUTO INCREMENT | GroupData 中使用，所有的用户共用一套自增的，等同于extend，另外，需要注意最多只有三位 |
+| id         | 区分用户       | INT           |                   | NOT NULL 外键约束                | User表中id                                           |
+| ext        | 保留         | char(32)      |                   |                              | 用户的 session 内容，腾讯 server 回包中会原样返回                  |
+| createTime | 生成时间       | DATETIME      | CURRENT_TIMESTAMP |                              |                                                    |
+| param      | 模板短信的参数    | text(500)     |                   |                              | 不同内容用逗号隔开                                          |
+| tpl_id     | 模板短信的模板id  | BIGINT        |                   |                              |                                                    |
+| content    | 短信内容       | varchar(500)  |                   |                              | 如果没有使用模板发送这个值必填                                    |
+| fee        | 这次花费       | DECIMAL(10,2) | 0.0               | NOT NULL                     |                                                    |
+| count      | 计数         | INT           | 1                 |                              | 后端统计发送的数量，与下面的对照                                   |
+| totalCount | 计数         | INT           | 1                 |                              | api 返回的统计结果，只统计成功的                                 |
+| mobile     | 单个发送中的手机号  | char(11)      |                   |                              |                                                    |
+| sid        | 单个发送中的sid  | char(32)      |                   |                              | 来自api                                              |
+| result     | 单个发送中的发送状态 | int           |                   |                              |                                                    |
+| errmsg     | 单个发送中的信息   | varchar(500)  |                   |                              |                                                    |
 
 `GroupData`
 
 | 列名         | 用途         | 数据类型          | 默认值               | 约束              | 备注                    |
 |------------|------------|---------------|-------------------|-----------------|-----------------------|
 | pid        | 唯一标识       | BIGINT        |                   | PRIMARY KEY  AI | 仅在数据库中使用              |
-| sid        | 唯一标识       | char(32)       |                   |                 | 与api返回值相同             |
+| sid        | 唯一标识       | char(32)      |                   |                 | 与api返回值相同             |
 | id         | 区分用户       | INT           |                   | NOT NULL 外键约束   | User表中id              |
 | extend     | 表示分类       | INT           |                   | NOT NULL   外键约束 | 来自上文                  |
 | createTime | 创建时间       | DATETIME      | CURRENT_TIMESTAMP |                 |                       |
+| param      | 群发参数       | text(500)          |                   |                 |                       |
 | mobile     | 手机号        |               |                   |                 |                       |
 | result     | 发送状态（计费依据） | INT           | NULL              |                 | 与api返回值相同 code/result |
 | fee        | 费用         | DECIMAL(10,2) |                   |                 |                       |
