@@ -185,16 +185,15 @@ class databaseIO:
         fee, paid, *_ = self.getUserInfo(id)
         return fee-paid
 
-    def SendSingle(self, id: int, mobile: str, text: str,uid, fee, sid, code, msg, count):
-
-        next_uid = self.getUserHighestUid(id)+1  # 函数内对conn的操作有影响 TODO
+    def SendSingle(self, id: int, mobile: str,ext,param:list, tpl_id:None,content:str,fee:float,count:int,totalCount:int,text: str,mobile:str,sid:str):
 
         self._connect()
 
         cur = self.conn.cursor()
-
         res = cur.execute(
-            'Insert into SendStat(id,uid,mobile,content) values(%s,%s,%s,%s)', (id, next_uid, mobile, text))
+            'Insert into SendStat(id,ext,param,tpl_id,content,fee,count,totalCount,mobile,sid,result,errmsg) '+
+            'values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
+             (id,ext,param,tpl_id,content,fee,count,totalCount,mobile,sid,result,errmsg))
         self.conn.commit()
         cur.close()
 

@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS `groupMessage`.`SendStat` (
   `count` INT NULL DEFAULT 1,
   `totalCount` INT NULL COMMENT '返回的结果',
   `mobile` CHAR(11) NULL,
-  `sid` BIGINT NULL,
+  `sid` CHAR(32) NULL,
   `result` INT NULL,
   `errmsg` VARCHAR(500) NULL,
   PRIMARY KEY (`extend`),
@@ -69,7 +69,7 @@ DROP TABLE IF EXISTS `groupMessage`.`GroupData` ;
 
 CREATE TABLE IF NOT EXISTS `groupMessage`.`GroupData` (
   `pid` BIGINT NOT NULL AUTO_INCREMENT,
-  `sid` BIGINT NULL,
+  `sid` CHAR(32) NULL,
   `id` INT NOT NULL,
   `extend` INT NOT NULL,
   `createTime` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
