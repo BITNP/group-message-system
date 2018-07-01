@@ -59,8 +59,9 @@ mysql
 用户表存放着用户相关信息，方便后端区分用户。
 每个用户又拥有一个发送记录表，和群发信息表。
 短信的具体内容都存在前者；如果是群发，则后者存放所有对应手机号和发送情况，并存储回复情况
-extend 就是用户的主键，
-uid 是每次的id，就是第二个表的主键
+extend值长三位大概每学年要重新制零一次？
+由于对于业务的了解于`2018-07-01`又深了一些，所以数据库可能要重新设计
+尤其是只用extend区别流水，这跟之前计划的不太一样
 
 
 - 权限设置语句
@@ -84,84 +85,69 @@ GRANT Select,UPDATE ON
 | id         | 唯一标识    | BIGINT        |                   | AUTO INCREAMENT PRIMARY KEY | 就当做extend值？ |
 | username   | 用户信息    | varchar(45)   | NULL              | NOT NULL                    |             |
 | password   |         | char(32)      | NULL              | NOT NULL                    |             |
-| fee        | 总计花费    | DECIMAL(10,2) | 0                 | NOT NULL                    |             |
 | tplIDList  | 模板id    | varchar(1000) | ''                |                             |             |
-| fee        | 总花费     | DECIMAL(10,2) | 0.0               | NOT NULL                    |             |
+| fee        | 总记花费    | DECIMAL(10,2) | 0.0               | NOT NULL                    |             |
 | paid       | 已缴费     | DECIMAL(10,2) | 0.0               | NOT NULL                    |             |
 | createTime | 该信息生成时间 | DATETIME      | CURRENT_TIMESTAMP |                             |             |
 | remark     | 备注信息    | varchar(1000) |                   | NOT NULL                    |             |
 
 `SendStat`
-| 列名         | 用途         | 数据类型          | 默认值               | 约束                          | 备注                |
-|------------|------------|---------------|-------------------|-----------------------------|-------------------|
-| pid        | 唯一标识       | INT           |                   | AUTO INCREAMENT PRIMARY KEY | 仅在数据库中使用          |
-| id         | 区分用户       | INT           |                   | NOT NULL 外键约束               | User表中id          |
-| uid        | 区分批次       | INT           | NULL              | NOT NULL                    | GroupData 中 使用    |
-| createTime | 生成时间       | DATETIME      | CURRENT_TIMESTAMP |                             |                   |
-| content    | 短信内容       | text(1000)    |                   |                             |                   |
-| fee        | 这次花费       | DECIMAL(10,2) | 0.0               | NOT NULL                    |                   |
-| count      | 计数         | INT           | 1                 |                             | 后端统计发送的数量，与下面的对照  |
-| totalCount | 计数         | INT           | 1                 |                             | api 返回的totalCount |
-| mobile     | 单个发送中的手机号  | char(11)      |                   |                             |                   |
-| sid        | 单个发送中的sid  | BIGINT        |                   |                             | 来自api             |
-| code       | 单个发送中的发送状态 | int           |                   |                             |                   |
-| msg        | 单个发送中的信息   | varchar(500)  |                   |                             |                   |
+| 列名         | 用途         | 数据类型          | 默认值               | 约束                          | 备注                                                 |
+|------------|------------|---------------|-------------------|-----------------------------|----------------------------------------------------|
+| pid        | 唯一标识       | INT           |                   | AUTO INCREAMENT PRIMARY KEY | 仅在数据库中使用                                           |
+| id         | 区分用户       | INT           |                   | NOT NULL 外键约束               | User表中id                                           |
+| extend     | 区分批次       | INT           | NULL              | NOT NULL   AUTO INCREMENT   | GroupData 中使用，所有的用户共用一套自增的，等同于extend，另外，需要注意最多只有三位 |
+| ext        | 保留         | char(32)      |                   |                             | 用户的 session 内容，腾讯 server 回包中会原样返回                  |
+| createTime | 生成时间       | DATETIME      | CURRENT_TIMESTAMP |                             |                                                    |
+| param      | 模板短信的参数    | text(500)     |                   |                             | 不同内容用逗号隔开                                          |
+| tpl_id     | 模板短信的模板id  | BIGINT        |                   |                             |                                                    |
+| content    | 短信内容       | varchar(500)  |                   |                             | 如果没有使用模板发送这个值必填                                    |
+| fee        | 这次花费       | DECIMAL(10,2) | 0.0               | NOT NULL                    |                                                    |
+| count      | 计数         | INT           | 1                 |                             | 后端统计发送的数量，与下面的对照                                   |
+| totalCount | 计数         | INT           | 1                 |                             | api 返回的统计结果，只统计成功的                                 |
+| mobile     | 单个发送中的手机号  | char(11)      |                   |                             |                                                    |
+| sid        | 单个发送中的sid  | BIGINT        |                   |                             | 来自api                                              |
+| result     | 单个发送中的发送状态 | int           |                   |                             |                                                    |
+| errmsg     | 单个发送中的信息   | varchar(500)  |                   |                             |                                                    |
 
 `GroupData`
 
-| 列名     | 用途       | 数据类型          | 默认值  | 约束              | 备注        |
-|--------|----------|---------------|------|-----------------|-----------|
-| pid    | 唯一标识     | BIGINT        |      | PRIMARY KEY  AI | 仅在数据库中使用  |
-| sid    | 唯一标识     | BIGINT        |      |                 | 与api返回值相同 |
-| id     | 区分用户     | INT           |      | NOT NULL 外键约束   | User表中id  |
-| uid    | 表示分类     | INT           |      | NOT NULL   外键约束 | 来自上文      |
-| mobile | 手机号      |               |      |                 |           |
-| code   | 发送状态     | INT           | NULL |                 | 与api返回值相同 |
-| fee    | 费用       | DECIMAL(10,2) |      |                 |           |
-| msg    | 单个发送中的信息 | varchar(500)  |      |                 |           |
+| 列名         | 用途         | 数据类型          | 默认值               | 约束              | 备注                    |
+|------------|------------|---------------|-------------------|-----------------|-----------------------|
+| pid        | 唯一标识       | BIGINT        |                   | PRIMARY KEY  AI | 仅在数据库中使用              |
+| sid        | 唯一标识       | BIGINT        |                   |                 | 与api返回值相同             |
+| id         | 区分用户       | INT           |                   | NOT NULL 外键约束   | User表中id              |
+| extend     | 表示分类       | INT           |                   | NOT NULL   外键约束 | 来自上文                  |
+| createTime | 创建时间       | DATETIME      | CURRENT_TIMESTAMP |                 |                       |
+| mobile     | 手机号        |               |                   |                 |                       |
+| result     | 发送状态（计费依据） | INT           | NULL              |                 | 与api返回值相同 code/result |
+| fee        | 费用         | DECIMAL(10,2) |                   |                 |                       |
+| errmsg     | 单个发送中的信息   | varchar(500)  |                   |                 |                       |
+
+`Tpl`
+
+| 列名         | 用途   | 数据类型     | 默认值               | 约束              | 备注                        |  |
+|------------|------|----------|-------------------|-----------------|---------------------------|--|
+| pid        | 唯一标识 | BIGINT   |                   | PRIMARY KEY  AI | 仅在数据库中使用                  |  |
+| id         | 用户id | INT      |                   |        NOT NULL         |                           |  |
+| tpl_id     | 模板id | BIGINT   |                   |                 |                           |  |
+| createTime | 创建时间 | DATETIME | CURRENT_TIMESTAMP |                 |                           |  |
+| text       | 模板内容 |  varchar(500)  |                   |      NOT NULL           |                           |  |
+| title      | 模板名称 |     varchar(200)     |                   |                 |                           |  |
+| remark     | 模板备注 |     varchar(200)     |                   |                 |                           |  |
+| result     | 错误码  |   INT       |                   |                 |                           |  |
+| errmsg     |      |      varchar(100)    |                   |                 | 错误消息，result 非 0 时的具体错误信息  |  |
+| status     | 模板状态 |      INT    |                   |                 | Enum{0：已通过, 1：待审核, 2：已拒绝} |  |
 
 - 数据库生成语句
 
 ```sql
-create database groupMessage 
-CHARACTER SET 'utf8'
-COLLATE 'utf8_general_ci';
-
-use groupMessage;
-
-create table User(
-  id int(10) Primary key not null AUTO_INCREMENT ,
-  username varchar(30) NOT NULL,
-  password char(32) NOT NULL,
-  fee DECIMAL(10,2) DEFAULT 0,
-  tplIDList varchar(1000) DEFAULT '',
-  createTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  remark varchar(1000) NOT NULL
-)DEFAULT CHARSET=utf8;
-
-
-create table User(
-  uid INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
-  createTime 
-)DEFAULT CHARSET=utf8;
-
--- 测试数据
-insert into User(username,password,
-extend,uid,
-remark)
-VALUE
-('wangxie','md5',
-0,01,'网络开拓者协会内部使用');
-insert into User(username,password,
-extend,uid,
-remark)
-VALUE
-('shetuan1','md6',
-0,02,'random group');
-
+-- 采用workbench进行数据库设计
+-- 所有生成语句保存在了单独文本中
 
 ```
 `数据库建立于2018-06-29 22:47:41测试通过`
+`数据库与2018-07-01 19:54:00重构`
 
 ## 后端完整逻辑
 
@@ -217,3 +203,10 @@ VALUE
 - 2018-06-30
   - 加入数据库验证
   - 后端基本逻辑完成
+  - 数据库重构
+  - 后端对数据库IO进行封装
+- 2018-07-01
+  - 完善数据库IO的封装
+  - 向云片网客服询问服务细节，发现可能无法满足需求
+  - 转向腾讯云的SMS
+  - 要根据新的细节重新设计数据库
