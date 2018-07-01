@@ -39,18 +39,19 @@ ENGINE = InnoDB;
 DROP TABLE IF EXISTS `groupMessage`.`SendStat` ;
 
 CREATE TABLE IF NOT EXISTS `groupMessage`.`SendStat` (
-  `mid` INT NOT NULL AUTO_INCREMENT,
+  `pid` INT NOT NULL AUTO_INCREMENT,
   `id` INT NULL,
   `uid` INT NOT NULL,
   `createTime` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
   `content` TEXT(1000) NULL,
   `fee` DECIMAL(10,2) UNSIGNED NULL DEFAULT 0.0,
   `count` INT NULL DEFAULT 1,
+  `totalCount` INT NULL COMMENT '返回的结果',
   `mobile` CHAR(11) NULL,
   `sid` BIGINT NULL,
   `code` INT NULL,
   `msg` VARCHAR(500) NULL,
-  PRIMARY KEY (`mid`),
+  PRIMARY KEY (`pid`),
   INDEX `fk_SendStat_1_idx` (`id` ASC),
   CONSTRAINT `fk_SendStat_1`
     FOREIGN KEY (`id`)
@@ -66,16 +67,17 @@ ENGINE = InnoDB;
 DROP TABLE IF EXISTS `groupMessage`.`GroupData` ;
 
 CREATE TABLE IF NOT EXISTS `groupMessage`.`GroupData` (
-  `sid` BIGINT NOT NULL,
-  `id` INT NULL,
-  `uid` INT NULL,
-  `mobile` CHAR(13) NULL,
-  `code` INT NOT NULL,
-  `fee` DECIMAL(10,2) NULL,
+  `pid` BIGINT NOT NULL AUTO_INCREMENT,
+  `sid` BIGINT NULL,
+  `id` INT NOT NULL,
+  `uid` INT NOT NULL,
+  `mobile` CHAR(13) NOT NULL,
+  `code` INT NULL,
+  `fee` DECIMAL(10,2) NULL DEFAULT 0.00,
   `msg` VARCHAR(500) NULL,
-  PRIMARY KEY (`sid`),
   INDEX `fk_GroupData_1_idx` (`id` ASC),
   INDEX `fk_GroupData_2_idx` (`uid` ASC),
+  PRIMARY KEY (`pid`),
   CONSTRAINT `fk_GroupData_1`
     FOREIGN KEY (`id`)
     REFERENCES `groupMessage`.`User` (`id`)
@@ -83,7 +85,7 @@ CREATE TABLE IF NOT EXISTS `groupMessage`.`GroupData` (
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_GroupData_2`
     FOREIGN KEY (`uid`)
-    REFERENCES `groupMessage`.`SendStat` (`mid`)
+    REFERENCES `groupMessage`.`SendStat` (`pid`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;

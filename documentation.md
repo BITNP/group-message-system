@@ -86,31 +86,33 @@ GRANT Select,UPDATE ON
 | password   |         | char(32)      | NULL              | NOT NULL                    |             |
 | fee        | 总计花费    | DECIMAL(10,2) | 0                 | NOT NULL                    |             |
 | tplIDList  | 模板id    | varchar(1000) | ''                |                             |             |
-| fee        | 总花费       | DECIMAL(10,2) | 0.0               | NOT NULL                    |                |
-| paid       | 已缴费        | DECIMAL(10,2) | 0.0               | NOT NULL                    |                |
+| fee        | 总花费     | DECIMAL(10,2) | 0.0               | NOT NULL                    |             |
+| paid       | 已缴费     | DECIMAL(10,2) | 0.0               | NOT NULL                    |             |
 | createTime | 该信息生成时间 | DATETIME      | CURRENT_TIMESTAMP |                             |             |
 | remark     | 备注信息    | varchar(1000) |                   | NOT NULL                    |             |
 
 `SendStat`
-| 列名         | 用途         | 数据类型          | 默认值               | 约束                          | 备注             |
-|------------|------------|---------------|-------------------|-----------------------------|----------------|
-| mid        | 唯一标识       | INT           |                   | AUTO INCREAMENT PRIMARY KEY | 仅在数据库中使用       |
-| id         | 区分用户       | INT           |                   | NOT NULL 外键约束               | User表中id       |
-| uid        | 区分批次       | INT           |   NULL     |     NOT NULL                  | GroupData 中 使用 |
-| createTime | 生成时间       | DATETIME      | CURRENT_TIMESTAMP |                             |                |
-| content    | 短信内容       | text(1000)    |                   |                             |                |
-| fee        | 这次花费       | DECIMAL(10,2) | 0.0               | NOT NULL                    |                |
-| count      | 计数         | INT           | 1                 |                             |                |
-| mobile     | 单个发送中的手机号  | char(11)      |                   |                             |                |
-| sid        | 单个发送中的sid  | BIGINT        |                   |                             | 来自api          |
-| code       | 单个发送中的发送状态 | int           |                   |                             |                |
-| msg        | 单个发送中的信息   | varchar(500)  |                   |                             |                |
+| 列名         | 用途         | 数据类型          | 默认值               | 约束                          | 备注                |
+|------------|------------|---------------|-------------------|-----------------------------|-------------------|
+| pid        | 唯一标识       | INT           |                   | AUTO INCREAMENT PRIMARY KEY | 仅在数据库中使用          |
+| id         | 区分用户       | INT           |                   | NOT NULL 外键约束               | User表中id          |
+| uid        | 区分批次       | INT           | NULL              | NOT NULL                    | GroupData 中 使用    |
+| createTime | 生成时间       | DATETIME      | CURRENT_TIMESTAMP |                             |                   |
+| content    | 短信内容       | text(1000)    |                   |                             |                   |
+| fee        | 这次花费       | DECIMAL(10,2) | 0.0               | NOT NULL                    |                   |
+| count      | 计数         | INT           | 1                 |                             | 后端统计发送的数量，与下面的对照  |
+| totalCount | 计数         | INT           | 1                 |                             | api 返回的totalCount |
+| mobile     | 单个发送中的手机号  | char(11)      |                   |                             |                   |
+| sid        | 单个发送中的sid  | BIGINT        |                   |                             | 来自api             |
+| code       | 单个发送中的发送状态 | int           |                   |                             |                   |
+| msg        | 单个发送中的信息   | varchar(500)  |                   |                             |                   |
 
 `GroupData`
 
 | 列名     | 用途       | 数据类型          | 默认值  | 约束              | 备注        |
 |--------|----------|---------------|------|-----------------|-----------|
-| sid    | 唯一标识     | BIGINT        |      | PRIMARY KEY     | 与api返回值相同 |
+| pid    | 唯一标识     | BIGINT        |      | PRIMARY KEY  AI | 仅在数据库中使用  |
+| sid    | 唯一标识     | BIGINT        |      |                 | 与api返回值相同 |
 | id     | 区分用户     | INT           |      | NOT NULL 外键约束   | User表中id  |
 | uid    | 表示分类     | INT           |      | NOT NULL   外键约束 | 来自上文      |
 | mobile | 手机号      |               |      |                 |           |
