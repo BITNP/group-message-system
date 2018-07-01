@@ -83,7 +83,7 @@ GRANT Select,UPDATE ON
 | 列名         | 用途      | 数据类型          | 默认值               | 约束                          | 备注          |
 |------------|---------|---------------|-------------------|-----------------------------|-------------|
 | id         | 唯一标识    | BIGINT        |                   | AUTO INCREAMENT PRIMARY KEY | 就当做extend值？ |
-| username   | 用户信息    | varchar(45)   | NULL              | NOT NULL                    |             |
+| username   | 用户信息    | varchar(45)   | NULL              | NOT NULL UQ                 |             |
 | password   |         | char(32)      | NULL              | NOT NULL                    |             |
 | fee        | 总记花费    | DECIMAL(10,2) | 0.0               | NOT NULL                    |             |
 | paid       | 已缴费     | DECIMAL(10,2) | 0.0               | NOT NULL                    |             |
@@ -118,7 +118,7 @@ GRANT Select,UPDATE ON
 | id         | 区分用户       | INT           |                   | NOT NULL 外键约束   | User表中id              |
 | extend     | 表示分类       | INT           |                   | NOT NULL   外键约束 | 来自上文                  |
 | createTime | 创建时间       | DATETIME      | CURRENT_TIMESTAMP |                 |                       |
-| param      | 群发参数       | text(500)          |                   |                 |                       |
+| param      | 群发参数       | text(500)     |                   |                 |                       |
 | mobile     | 手机号        |               |                   |                 |                       |
 | result     | 发送状态（计费依据） | INT           | NULL              |                 | 与api返回值相同 code/result |
 | fee        | 费用         | DECIMAL(10,2) |                   |                 |                       |
