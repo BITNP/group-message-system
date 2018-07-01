@@ -126,18 +126,19 @@ GRANT Select,UPDATE ON
 
 `Tpl`
 
-| 列名         | 用途   | 数据类型     | 默认值               | 约束              | 备注                        |  |
-|------------|------|----------|-------------------|-----------------|---------------------------|--|
-| pid        | 唯一标识 | BIGINT   |                   | PRIMARY KEY  AI | 仅在数据库中使用                  |  |
-| id         | 用户id | INT      |                   |        NOT NULL         |                           |  |
-| tpl_id     | 模板id | BIGINT   |                   |                 |                           |  |
-| createTime | 创建时间 | DATETIME | CURRENT_TIMESTAMP |                 |                           |  |
-| text       | 模板内容 |  varchar(500)  |                   |      NOT NULL           |                           |  |
-| title      | 模板名称 |     varchar(200)     |                   |                 |                           |  |
-| remark     | 模板备注 |     varchar(200)     |                   |                 |                           |  |
-| result     | 错误码  |   INT       |                   |                 |                           |  |
-| errmsg     |      |      varchar(100)    |                   |                 | 错误消息，result 非 0 时的具体错误信息  |  |
-| status     | 模板状态 |      INT    |                   |                 | Enum{0：已通过, 1：待审核, 2：已拒绝} |  |
+| 列名         | 用途      | 数据类型         | 默认值               | 约束              | 备注                        |      |
+|------------|---------|--------------|-------------------|-----------------|---------------------------|------|
+| pid        | 唯一标识    | BIGINT       |                   | PRIMARY KEY  AI | 仅在数据库中使用                  |      |
+| id         | 用户id    | INT          |                   |                 |                           |      |
+| tpl_id     | 模板id    | BIGINT       |                   |                 |                           |      |
+| public     | 是否为共用模板 | INT          | 0                 |                 |                           |      |
+| createTime | 创建时间    | DATETIME     | CURRENT_TIMESTAMP |                 |                           | 1 则是 |
+| text       | 模板内容    | varchar(500) |                   | NOT NULL        |                           |      |
+| title      | 模板名称    | varchar(200) |                   |                 |                           |      |
+| remark     | 模板备注    | varchar(200) |                   |                 |                           |      |
+| result     | 错误码     | INT          |                   |                 |                           |      |
+| errmsg     |         | varchar(100) |                   |                 | 错误消息，result 非 0 时的具体错误信息  |      |
+| status     | 模板状态    | INT          |                   |                 | Enum{0：已通过, 1：待审核, 2：已拒绝} |      |
 
 - 数据库生成语句
 

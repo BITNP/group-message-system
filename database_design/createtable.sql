@@ -39,18 +39,21 @@ ENGINE = InnoDB;
 DROP TABLE IF EXISTS `groupMessage`.`SendStat` ;
 
 CREATE TABLE IF NOT EXISTS `groupMessage`.`SendStat` (
-  `pid` INT NOT NULL AUTO_INCREMENT,
+  `pid` INT NOT NULL,
   `id` INT NULL,
-  `uid` INT NOT NULL,
+  `extend` INT NOT NULL AUTO_INCREMENT,
+  `ext` CHAR(32) NULL COMMENT '保留\n',
   `createTime` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
-  `content` TEXT(1000) NULL,
+  `param` TEXT(500) NULL,
+  `tpl_id` BIGINT NULL,
+  `content` TEXT(500) NULL COMMENT '如果没有使用模板发送这个值必填',
   `fee` DECIMAL(10,2) UNSIGNED NULL DEFAULT 0.0,
   `count` INT NULL DEFAULT 1,
   `totalCount` INT NULL COMMENT '返回的结果',
   `mobile` CHAR(11) NULL,
   `sid` BIGINT NULL,
-  `code` INT NULL,
-  `msg` VARCHAR(500) NULL,
+  `result` INT NULL,
+  `errmsg` VARCHAR(500) NULL,
   PRIMARY KEY (`pid`),
   INDEX `fk_SendStat_1_idx` (`id` ASC),
   CONSTRAINT `fk_SendStat_1`
@@ -70,13 +73,14 @@ CREATE TABLE IF NOT EXISTS `groupMessage`.`GroupData` (
   `pid` BIGINT NOT NULL AUTO_INCREMENT,
   `sid` BIGINT NULL,
   `id` INT NOT NULL,
-  `uid` INT NOT NULL,
-  `mobile` CHAR(13) NOT NULL,
-  `code` INT NULL,
+  `extend` INT NOT NULL,
+  `createTime` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `mobile` CHAR(13) NULL,
+  `result` INT NULL,
   `fee` DECIMAL(10,2) NULL DEFAULT 0.00,
-  `msg` VARCHAR(500) NULL,
+  `errmsg` VARCHAR(500) NULL,
   INDEX `fk_GroupData_1_idx` (`id` ASC),
-  INDEX `fk_GroupData_2_idx` (`uid` ASC),
+  INDEX `fk_GroupData_2_idx` (`extend` ASC),
   PRIMARY KEY (`pid`),
   CONSTRAINT `fk_GroupData_1`
     FOREIGN KEY (`id`)
@@ -84,8 +88,35 @@ CREATE TABLE IF NOT EXISTS `groupMessage`.`GroupData` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_GroupData_2`
-    FOREIGN KEY (`uid`)
+    FOREIGN KEY (`extend`)
     REFERENCES `groupMessage`.`SendStat` (`pid`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `groupMessage`.`Tpl`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `groupMessage`.`Tpl` ;
+
+CREATE TABLE IF NOT EXISTS `groupMessage`.`Tpl` (
+  `pid` BIGINT NOT NULL AUTO_INCREMENT,
+  `id` INT NULL,
+  `tpl_id` BIGINT NULL,
+  `public` INT NULL DEFAULT 0,
+  `createTime` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `text` VARCHAR(500) NOT NULL,
+  `title` VARCHAR(200) NULL,
+  `remark` VARCHAR(200) NULL,
+  `result` INT NULL,
+  `errmsg` VARCHAR(100) NULL,
+  `status` INT NULL,
+  PRIMARY KEY (`pid`),
+  INDEX `fk_Tpl_1_idx` (`id` ASC),
+  CONSTRAINT `fk_Tpl_1`
+    FOREIGN KEY (`id`)
+    REFERENCES `groupMessage`.`User` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
