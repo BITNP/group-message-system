@@ -37,7 +37,7 @@ class databaseIO:
         """
         self.conn.close()
 
-    def identfyUser(self, username, password):
+    def identifyUser(self, username, password):
         """
         判断是否为用户
             :param self: 
@@ -73,9 +73,10 @@ class databaseIO:
             (id,)
         )
         res = cur.fetchone()
+        res = ('',) if res[0] is None else res
         cur.close()
         self._close()
-
+        
         return list(set(res[0].split(',')))
 
     def getUserInfo(self, id: int):
@@ -276,9 +277,9 @@ if __name__ == '__main__':
     run = databaseIO('172.17.0.1', 'user', 'password',
                      db='groupMessage', port=32768)
 
-    # run.InsertUser('wangxie','md5','aaa')
-    # run.InsertUser('shetuan1','md6','bbb')
-    # run.InsertUser('shetuan2','md7','ccc')
+    run.InsertUser('wangxie','md5','aaa')
+    run.InsertUser('shetuan1','md6','bbb')
+    run.InsertUser('shetuan2','md7','ccc')
 
     data = [
         dict(code=1, sid=123, mobile='112', fee=0.05, msg='1sda'),
@@ -288,8 +289,8 @@ if __name__ == '__main__':
     # run.addUserTpl(2,22433234,'hhhh',0,'success',0,ifpublic=0)
     # run.deleteUserTpl(2,2324)
     # run.addUserPaid(1, 0.04)
-    run.SendSingle(1, '123', '', None, 22433234, '',
-                   0.04, 3, 3, 'aasdf', 1, 'suc')
+    # run.SendSingle(1, '123', '', None, 22433234, '',
+    #                0.04, 3, 3, 'aasdf', 1, 'suc')
     print(run.getUserHighestExtend())
     print(run.checkUserBalance(1))
     # uid = (run.beforeSendSingle(1, '1123', 'hh'))
