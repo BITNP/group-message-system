@@ -123,23 +123,24 @@ GRANT Select,UPDATE ON
 | result     | 发送状态（计费依据） | INT           | NULL              |                 | 与api返回值相同 code/result |
 | fee        | 费用         | DECIMAL(10,2) |                   |                 |                       |
 | errmsg     | 单个发送中的信息   | varchar(500)  |                   |                 |                       |
+| reply      | 单个发送的短信回复  | varchar(500)  |                   |                 | 空值则为没有回复              |
 
 `Tpl`
 
-| 列名         | 用途      | 数据类型         | 默认值               | 约束              | 备注                        |      |
-|------------|---------|--------------|-------------------|-----------------|---------------------------|------|
-| pid        | 唯一标识    | BIGINT       |                   | PRIMARY KEY  AI | 仅在数据库中使用                  |      |
-| id         | 用户id    | INT          |                   |                 |                           |      |
-| tpl_id     | 模板id    | BIGINT       |                   |                 |                           |      |
-| public     | 是否为共用模板 | INT          | 0                 |                 |                           |      |
-| createTime | 创建时间    | DATETIME     | CURRENT_TIMESTAMP |                 |                           | 1 则是 |
-| text       | 模板内容    | varchar(500) |                   | NOT NULL        |                           |      |
-| title      | 模板名称    | varchar(200) |                   |                 |                           |      |
-| remark     | 模板备注    | varchar(200) |                   |                 |                           |      |
-| result     | 错误码     | INT          |                   |                 |                           |      |
-| errmsg     |         | varchar(100) |                   |                 | 错误消息，result 非 0 时的具体错误信息  |      |
-| status     | 模板状态    | INT          |                   |                 | Enum{0：已通过, 1：待审核, 2：已拒绝} |      |
-
+| 列名         | 用途        | 数据类型         | 默认值               | 约束              | 备注                        |      |
+|------------|-----------|--------------|-------------------|-----------------|---------------------------|------|
+| pid        | 唯一标识      | BIGINT       |                   | PRIMARY KEY  AI | 仅在数据库中使用                  |      |
+| id         | 用户id      | INT          |                   |                 |                           |      |
+| tpl_id     | 模板id      | BIGINT       |                   |                 |                           |      |
+| public     | 是否为共用模板   | INT          | 0                 |                 |                           |      |
+| createTime | 创建时间      | DATETIME     | CURRENT_TIMESTAMP |                 |                           | 1 则是 |
+| text       | 模板内容      | varchar(500) |                   | NOT NULL        |                           |      |
+| title      | 模板名称      | varchar(200) |                   |                 |                           |      |
+| remark     | 模板备注      | varchar(200) |                   |                 |                           |      |
+| result     | 错误码       | INT          |                   |                 |                           |      |
+| errmsg     |           | varchar(100) |                   |                 | 错误消息，result 非 0 时的具体错误信息  |      |
+| status     | 模板状态      | INT          |                   |                 | Enum{0：已通过, 1：待审核, 2：已拒绝} |      |
+| reply      | 单个发送的短信回复 | varchar(500) |                   |                 | 空值则为没有回复                  |      |
 - 数据库生成语句
 
 ```sql
@@ -174,19 +175,17 @@ GRANT Select,UPDATE ON
 
 ## 前端->后端 api 用`request_code`字段
 
-| 值   | 含义       | 后端需要做的处理                                            |                        |
-|-----|----------|-----------------------------------------------------|------------------------|
-| 1   | 单条发送     | `https://sms.yunpian.com/v2/sms/single_send.json`   | uid,extend,mobile,text |
-| 2.1 | 获取默认模板   |                                                     |                        |
-| 2.2 | 获取模板     | `https://sms.yunpian.com/v2/tpl/get.json`           |                        |
-| 2.3 | 添加模版     | `https://sms.yunpian.com/v2/tpl/add.json`           |                        |
-| 2.4 | 修改模板     |                                                     |                        |
-| 2.5 | 删除模板     |                                                     |                        |
-| 3.1 | 添加签名     |                                                     |                        |
-| 3.2 | 获取签名     |                                                     |                        |
-| 3.3 | 修改签名     |                                                     |                        |
-| 4   | 查看短信发送记录 |                                                     |                        |
-| 7   | 日账单导出    | `https://sms.yunpian.com/v2/sms/get_total_fee.json` |                        |
+| 值   | 含义       | 后端需要做的处理                                             |                        |
+|-----|----------|------------------------------------------------------|------------------------|
+| 1   | 单条发送     | `https://sms.yunpian.com/v2/sms/single_send.json`    | uid,extend,mobile,text |
+| 2.1 | 获取默认模板   |                                                      |                        |
+| 2.2 | 获取模板     | `https://sms.yunpian.com/v2/tpl/get.json`            |                        |
+| 2.3 | 添加模版     | `https://sms.yunpian.com/v2/tpl/add.json`            | 模板格式                   |
+| 2.4 | 修改模板     |                                                      |                        |
+| 2.5 | 删除模板     |                                                      |                        |
+| 3   | 制定模板群发   | `https://sms.yunpian.com/v2/sms/tpl_batch_send.json` |                        |
+| 4   | 查看短信发送记录 |                                                      |                        |
+| 7   | 日账单导出    | `https://sms.yunpian.com/v2/sms/get_total_fee.json`  |                        |
 
 ## 一些注意事项
 

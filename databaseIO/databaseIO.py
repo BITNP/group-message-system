@@ -58,8 +58,29 @@ class databaseIO:
             res = cur.fetchone()
             cur.close()
             self._close()
-            return res
+            return res[0]
 
+    def isSingle(self,extend:int):
+        """
+        查询该extend是否是单词发送，被回复调用
+            :param self: 
+            :param extend:int: 默认存在
+        """
+        self._connect()
+        
+        cur = self.conn.cursor()
+        cur.execute('select count from SendStat where extend = %s',(extend,))
+        count = cur.fetchone()[0]
+        cur.close()
+
+        self._close()
+        if count == 1:
+            return True
+        else:
+            return False
+    
+    def addReply(self,extend:int,reply:str):
+        pass
     def getUserTpl(self, id: int):
         """
         得到以列表形式存储的模板编号
@@ -76,7 +97,7 @@ class databaseIO:
         res = ('',) if res[0] is None else res
         cur.close()
         self._close()
-        
+
         return list(set(res[0].split(',')))
 
     def getUserInfo(self, id: int):
@@ -236,15 +257,16 @@ class databaseIO:
         self._connect()
 
         cur = self.conn.cursor()
-
+        
         cur.execute(
             'Insert into SendStat(id,ext,tpl_id,content,fee,count,totalCount) values(%s,%s,%s,%s,%s,%s,%s)',
-            (id,ext,tpl_id,content,fee,len(data),totalCount)
+            (id,ext,tpl_id,content,fee,len(data_list),totalCount)
             )
-        multi_info = [ (id,extend,i['mobile'],i['sid'],i['result'],i['fee'],i['errmsg'])
+        multi_info = [ (id,extend,i['mobile'],i['sid'],i['result'],i['fee'],i['errmsg'],i['param']) for i in data_list
         ]
+        # print('\n',multi_info)
         res = cur.executemany(
-            'INSERT into GroupData(id,extend,mobile,sid,result,fee,errmsg) values(%s,%s,%s,%s,%s,%s)',
+            'INSERT into GroupData(id,extend,mobile,sid,result,fee,errmsg,param) values(%s,%s,%s,%s,%s,%s,%s,%s)',
              multi_info
         )
         self.conn.commit()
@@ -277,9 +299,9 @@ if __name__ == '__main__':
     run = databaseIO('172.17.0.1', 'user', 'password',
                      db='groupMessage', port=32768)
 
-    run.InsertUser('wangxie','md5','aaa')
-    run.InsertUser('shetuan1','md6','bbb')
-    run.InsertUser('shetuan2','md7','ccc')
+    # run.InsertUser('wangxie','md5','aaa')
+    # run.InsertUser('shetuan1','md6','bbb')
+    # run.InsertUser('shetuan2','md7','ccc')
 
     data = [
         dict(code=1, sid=123, mobile='112', fee=0.05, msg='1sda'),
@@ -293,5 +315,6 @@ if __name__ == '__main__':
     #                0.04, 3, 3, 'aasdf', 1, 'suc')
     print(run.getUserHighestExtend())
     print(run.checkUserBalance(1))
+    print(run.isSingle(2))
     # uid = (run.beforeSendSingle(1, '1123', 'hh'))
     # print(run.afterSendSingle(1,uid,0.02,1,2,'saf'))
