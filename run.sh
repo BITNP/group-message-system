@@ -1,6 +1,6 @@
 # always run
 while true
 do
-  sudo python server.py 
+  python server.py 
 done
 
