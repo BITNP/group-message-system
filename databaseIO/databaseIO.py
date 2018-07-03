@@ -60,16 +60,16 @@ class databaseIO:
             self._close()
             return res[0]
 
-    def isSingle(self,extend:int):
+    def isSingle(self, extend: int):
         """
         查询该extend是否是单词发送，被回复调用
             :param self: 
             :param extend:int: 默认存在
         """
         self._connect()
-        
+
         cur = self.conn.cursor()
-        cur.execute('select count from SendStat where extend = %s',(extend,))
+        cur.execute('select count from SendStat where extend = %s', (extend,))
         count = cur.fetchone()[0]
         cur.close()
 
@@ -78,9 +78,32 @@ class databaseIO:
             return True
         else:
             return False
-    
-    def addReply(self,extend:int,reply:str):
-        pass
+
+    def addReply(self, extend: int, reply: str, mobile: str = None):
+        """
+        根据参数自动添加回复，如果是单人不需要mobile
+            :param self: 
+            :param extend:int: 
+            :param reply:str: 
+            :param mobile:str=None: 
+        """
+        isSingle = self.isSingle(extend)
+
+        self._connect()
+        cur = self.conn.cursor()
+        if isSingle:
+            res = cur.execute('UPDATE SendStat SET reply = %s where extend = %s ',
+                              (reply, extend)
+                              )
+        else:
+            res = cur.execute('UPDATE GroupData SET reply = %s where extend = %s and mobile = %s', (reply, extend, mobile)
+                              )
+        self.conn.commit()
+        cur.close()
+
+        self._close()
+        return res
+
     def getUserTpl(self, id: int):
         """
         得到以列表形式存储的模板编号
@@ -240,7 +263,7 @@ class databaseIO:
         self._close()
         return res  # 返回 uid
 
-    def SendMulti(self, id: int, ext:str, tpl_id:int, content:str, fee:float, totalCount:int, data_list: list):
+    def SendMulti(self, id: int, ext: str, tpl_id: int, content: str, fee: float, totalCount: int, data_list: list):
         """
         发送多个后调用
             :param self: 
@@ -252,22 +275,22 @@ class databaseIO:
             :param totalCount:int: 
             :param data_list:list: 字典列表，包括 sid,param,mobile,result,fee,errmsg
             :ret: 插入行数
-        """ 
+        """
         extend = self.getUserHighestExtend()+1
         self._connect()
 
         cur = self.conn.cursor()
-        
+
         cur.execute(
             'Insert into SendStat(id,ext,tpl_id,content,fee,count,totalCount) values(%s,%s,%s,%s,%s,%s,%s)',
-            (id,ext,tpl_id,content,fee,len(data_list),totalCount)
-            )
-        multi_info = [ (id,extend,i['mobile'],i['sid'],i['result'],i['fee'],i['errmsg'],i['param']) for i in data_list
-        ]
+            (id, ext, tpl_id, content, fee, len(data_list), totalCount)
+        )
+        multi_info = [(id, extend, i['mobile'], i['sid'], i['result'], i['fee'], i['errmsg'], i['param']) for i in data_list
+                      ]
         # print('\n',multi_info)
         res = cur.executemany(
             'INSERT into GroupData(id,extend,mobile,sid,result,fee,errmsg,param) values(%s,%s,%s,%s,%s,%s,%s,%s)',
-             multi_info
+            multi_info
         )
         self.conn.commit()
         cur.close()
@@ -282,7 +305,7 @@ class databaseIO:
             :param username:str: 
             :param password:str: 
             :param remark:str: 
-        """   
+        """
         self._connect()
 
         cur = self.conn.cursor()
