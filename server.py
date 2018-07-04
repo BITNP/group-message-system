@@ -26,66 +26,64 @@ start_time = '2018-06-11 00:00:00'
 end_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 
 
+def replaceText(raw_text, replaceTo: list, whereToReplace: list):
+    text = raw_text
+    for i in range(len(whereToReplace)):
+        text = text.replace(whereToReplace[i], replaceTo[i])
+    return text
+
+
 def process_resquest(dict_data):
     code = str(dict_data['request_code'])
     if code == '4':
         response = requests.post(
             'https://sms.yunpian.com/v2/sms/get_record.json', data=dict_data)
-    elif code == '1':
-        response = requests.post(
-            'https://sms.yunpian.com/v2/sms/single_send.json',data=dict_data
-        )
-        dict_result = response.json()
-        if 'http_status_code' in dict_result:  # api调用正确，但有其他错误
-            return json.dumps(dict_result, ensure_ascii=False)
-        print(dict_result)
-        db.SendSingle(dict_data['id'],dict_data['mobile'],'',[],None,dict_data['text'],
-        dict_result['fee'],dict_result['count'],dict_result['sid'],dict_result['code'],dict_result['msg'])
-    
     elif code == '3':
         """
         注意，mobile要以逗号分割字符串形式传入（仅云片网，
         param要以列表的形式传入（云片网,也就是tpl_value
         """
+        payload = dict(apikey=dict_data['apikey'],
+                       mobile=','.join(dict_data['mobile'])
+                       )
+        text_list = [replaceText(
+            dict_data['content'], param, dict_data['replace']) for param in dict_data['param']]
+        payload['text'] = ','.join(text_list)
+        print(payload)
         response = requests.post(
-            'https://sms.yunpian.com/v2/sms/tpl_batch_send.json',dict_data
+            'https://sms.yunpian.com/v2/sms/multi_send.json', data=payload
         )
         dict_result = response.json()
         print(response.json())
         if 'http_status_code' in dict_result:  # api调用正确，但有其他错误
             return json.dumps(dict_result, ensure_ascii=False)
-        
-        result_data = [dict(sid=i['sid'],param=j,mobile=i['mobile'],result=i['code'],errmsg=i['msg'],fee=i['fee'])
-        for i,j in zip(dict_result['data'],dict_data['tpl_value'])
-        ]
 
-        db.SendMulti(dict_data['id'],'',dict_data['tpl_id'],'',dict_result['total_fee'],
-        dict_result['total_count'],result_data)
+        result_data = [dict(sid=i['sid'], param=str(j), mobile=i['mobile'], result=i['code'], errmsg=i['msg'], fee=i['fee'])
+                       for i, j in zip(dict_result['data'], dict_data['param'])
+                       ]
 
-    elif code == '5':
-        response = requests.post(
-            'https://sms.yunpian.com/v2/sms/tpl_batch_send.json',dict_data
-        )
-        dict_result = response.json()
-        if 'http_status_code' in dict_result:  # api调用正确，但有其他错误
-            return json.dumps(dict_result, ensure_ascii=False)
-        
-        db.SendSingle(dict_data['id'],dict_data['mobile'],'',[dict_data['tpl_value']],dict_data['tpl_id'],'',
-        dict_result['total_fee'],dict_result['data'][0]['count'],dict_result['data'][0]['sid'],dict_result['data'][0]['code'],dict_result['data'][0]['msg'])
+        db.Send(dict_data['id'], '', None, dict_data['content'], dict_result['total_fee'],
+                     dict_result['total_count'], result_data)
     elif code == '2.1':
         response = requests.post(
             'https://sms.yunpian.com/v2/tpl/get_default.json', data=dict_data)
     elif code == '2.2':
         response = requests.post(
             'https://sms.yunpian.com/v2/tpl/get.json', data=dict_data)
+        print(response.json())
         # 按照tplIDList 处理 TODO
         tpl_list = db.getUserTpl(dict_data['id'])
-        print('数据库中存储的',tpl_list)
-        # 没有处理异常 TODO
+        print('数据库中存储的', tpl_list)
         result = response.json()
-        # if 'http_status_code' in result: # api调用正确，但有其他错误
-        #     return json.dumps(result,ensure_ascii=False)
-        result = list(filter(lambda x: x['tpl_id'] in tpl_list, result))
+        # 异常处理
+        if 'http_status_code' in result:
+            return json.dumps(result, ensure_ascii=False)
+
+        if isinstance(result, dict):
+            result = [result]
+        # 下面一条语句起到过滤作用，注意生产环境中要取消注释
+        # result = list(filter(lambda x: x['tpl_id'] in tpl_list, result))
+
         return json.dumps(result, ensure_ascii=False)
 
     elif code == '2.3':
@@ -95,15 +93,17 @@ def process_resquest(dict_data):
 
         if 'http_status_code' in dict_result:  # api调用正确，但有其他错误
             return json.dumps(dict_result, ensure_ascii=False)
-        
+
         print(dict_result)
-        affect_row_num = db.addUserTpl(dict_data['id'],dict_result['tpl_id'],dict_result['tpl_content'],None,dict_result['check_status'],None)
+        affect_row_num = db.addUserTpl(
+            dict_data['id'], dict_result['tpl_id'], dict_result['tpl_content'],
+            None, dict_result['check_status'], None)
         print(affect_row_num)
         return json.dumps(dict_result, ensure_ascii=False)
 
     elif code == '7':
-        response = requests.post(
-            'https://sms.yunpian.com/v2/sms/get_total_fee.json', data=dict_data)
+        fee, paid, *_ = db.getUserInfo()
+        return json.dumps(dict(fee=fee, paid=paid))
     else:
         return None
     return response.text
@@ -125,15 +125,14 @@ class MyRequestHandler(BaseHTTPRequestHandler):
             self.send_header('Content-type', 'application/json')
             self.end_headers()
 
-    def _check_dict(self,data:dict,*args):
+    def _check_dict(self, data: dict, *args):
         for i_str in args:
             if i_str not in data:
                 self._set_headers(False)
-                string = '{"code":250,"msg":"'+i_str+' not in json"}'
+                string = '{"code":251,"msg":"'+i_str+' not in json"}'
                 self.wfile.write(string.encode())
                 return False
         return True
-
 
     def do_GET(self):
         print(str(self.path), str(self.headers))
@@ -155,7 +154,7 @@ class MyRequestHandler(BaseHTTPRequestHandler):
                 return None, False
             else:
                 dict_data.update(
-                dict(apikey=apikey, start_time=start_time, end_time=end_time))
+                    dict(apikey=apikey, start_time=start_time, end_time=end_time))
             return dict_data, True
 
         # Doesn't do anything with posted data
@@ -172,14 +171,14 @@ class MyRequestHandler(BaseHTTPRequestHandler):
             return
 
         # step 1 : 从数据库验证身份，提取信息
-        if not self._check_dict(dict_data,"username","password","request_code"):
+        if not self._check_dict(dict_data, "username", "password", "request_code"):
             return
 
-        myid = db.identifyUser(dict_data['username'],dict_data['password'])
+        myid = db.identifyUser(dict_data['username'], dict_data['password'])
 
-        if myid is not None :
+        if myid is not None:
             myinfo = db.getUserInfo(myid)
-            print('get info :',myinfo)
+            print('get info :', myinfo)
             print('验证成功')
         else:
             self._set_headers(False)
@@ -192,7 +191,7 @@ class MyRequestHandler(BaseHTTPRequestHandler):
         dict_data.update(dict(apikey=apikey, id=myid))
         print(dict_data)
         # step 3 : 如果有需要，过滤响应结果并返回；如果没有需要，直接返回
-        
+
         response_text = process_resquest(
             dict_data)
 
@@ -219,7 +218,8 @@ def init():
     初始化数据库
     """
     try:
-       db = dbIO.databaseIO('172.17.0.1','user','password','groupMessage',32768)
+        db = dbIO.databaseIO('172.18.0.1', 'root',
+                             'password', 'groupMessage', 32768)
     except MySQLdb.OperationalError as e:
         print('数据库连接失败', e)
         exit(1)

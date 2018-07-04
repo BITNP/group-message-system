@@ -92,22 +92,17 @@ GRANT Select,UPDATE ON
 
 `SendStat`
 
-| 列名         | 用途         | 数据类型          | 默认值               | 约束                           | 备注                                                 |
-|------------|------------|---------------|-------------------|------------------------------|----------------------------------------------------|
-| extend     | 区分批次       | INT           | NULL              | PK NOT NULL   AUTO INCREMENT | GroupData 中使用，所有的用户共用一套自增的，等同于extend，另外，需要注意最多只有三位 |
-| id         | 区分用户       | INT           |                   | NOT NULL 外键约束                | User表中id                                           |
-| ext        | 保留         | char(32)      |                   |                              | 用户的 session 内容，腾讯 server 回包中会原样返回                  |
-| createTime | 生成时间       | DATETIME      | CURRENT_TIMESTAMP |                              |                                                    |
-| param      | 模板短信的参数    | text(500)     |                   |                              | 不同内容用逗号隔开                                          |
-| tpl_id     | 模板短信的模板id  | BIGINT        |                   |                              |                                                    |
-| content    | 短信内容       | varchar(500)  |                   |                              | 如果没有使用模板发送这个值必填                                    |
-| fee        | 这次花费       | DECIMAL(10,2) | 0.0               | NOT NULL                     |                                                    |
-| count      | 计数         | INT           | 1                 |                              | 后端统计发送的数量，与下面的对照                                   |
-| totalCount | 计数         | INT           | 1                 |                              | api 返回的统计结果，只统计成功的                                 |
-| mobile     | 单个发送中的手机号  | char(11)      |                   |                              |                                                    |
-| sid        | 单个发送中的sid  | char(32)      |                   |                              | 来自api                                              |
-| result     | 单个发送中的发送状态 | int           |                   |                              |                                                    |
-| errmsg     | 单个发送中的信息   | varchar(500)  |                   |                              |                                                    |
+| 列名         | 用途        | 数据类型          | 默认值               | 约束                           | 备注                                                 |
+|------------|-----------|---------------|-------------------|------------------------------|----------------------------------------------------|
+| extend     | 区分批次      | INT           | NULL              | PK NOT NULL   AUTO INCREMENT | GroupData 中使用，所有的用户共用一套自增的，等同于extend，另外，需要注意最多只有三位 |
+| id         | 区分用户      | INT           |                   | NOT NULL 外键约束                | User表中id                                           |
+| ext        | 保留        | char(32)      |                   |                              | 用户的 session 内容，腾讯 server 回包中会原样返回                  |
+| createTime | 生成时间      | DATETIME      | CURRENT_TIMESTAMP |                              |                                                    |
+| tpl_id     | 模板短信的模板id | BIGINT        |                   |                              |                                                    |
+| content    | 短信内容      | varchar(500)  |                   |                              | 如果没有使用模板发送这个值必填                                    |
+| fee        | 这次花费      | DECIMAL(10,2) | 0.0               | NOT NULL                     |                                                    |
+| count      | 计数        | INT           | 1                 |                              | 后端统计发送的数量，与下面的对照                                   |
+| totalCount | 计数        | INT           | 1                 |                              | api 返回的统计结果，只统计成功的                                 |
 
 `GroupData`
 
@@ -122,8 +117,8 @@ GRANT Select,UPDATE ON
 | mobile     | 手机号        |               |                   |                 |                       |
 | result     | 发送状态（计费依据） | INT           | NULL              |                 | 与api返回值相同 code/result |
 | fee        | 费用         | DECIMAL(10,2) |                   |                 |                       |
-| errmsg     | 单个发送中的信息   | varchar(500)  |                   |                 |                       |
-| reply      | 单个发送的短信回复  | varchar(500)  |                   |                 | 空值则为没有回复              |
+| errmsg     | api回复的信息   | varchar(500)  |                   |                 |                       |
+| reply      | 短信回复       | varchar(500)  |                   |                 | 空值则为没有回复              |
 
 `Tpl`
 
@@ -141,6 +136,7 @@ GRANT Select,UPDATE ON
 | errmsg     |           | varchar(100) |                   |                 | 错误消息，result 非 0 时的具体错误信息  |      |
 | status     | 模板状态      | INT          |                   |                 | Enum{0：已通过, 1：待审核, 2：已拒绝} |      |
 | reply      | 单个发送的短信回复 | varchar(500) |                   |                 | 空值则为没有回复                  |      |
+
 - 数据库生成语句
 
 ```sql
@@ -175,17 +171,32 @@ GRANT Select,UPDATE ON
 
 ## 前端->后端 api 用`request_code`字段
 
-| 值   | 含义       | 后端需要做的处理                                             |                        |
-|-----|----------|------------------------------------------------------|------------------------|
-| 1   | 单条发送     | `https://sms.yunpian.com/v2/sms/single_send.json`    | uid,extend,mobile,text |
-| 2.1 | 获取默认模板   |                                                      |                        |
-| 2.2 | 获取模板     | `https://sms.yunpian.com/v2/tpl/get.json`            |                        |
-| 2.3 | 添加模版     | `https://sms.yunpian.com/v2/tpl/add.json`            | 模板格式                   |
-| 2.4 | 修改模板     |                                                      |                        |
-| 2.5 | 删除模板     |                                                      |                        |
-| 3   | 制定模板群发   | `https://sms.yunpian.com/v2/sms/tpl_batch_send.json` |                        |
-| 4   | 查看短信发送记录 |                                                      |                        |
-| 7   | 日账单导出    | `https://sms.yunpian.com/v2/sms/get_total_fee.json`  |                        |
+| 值   | 含义       | api                                              | 后端需要做的处理 |
+|-----|----------|--------------------------------------------------|----------|
+| 2.1 | 获取默认模板   |                                                  | ok       |
+| 2.2 | 获取模板     | `https://sms.yunpian.com/v2/tpl/get.json`        | 过滤       |
+| 2.3 | 添加模版     | `https://sms.yunpian.com/v2/tpl/add.json`        | 模板格式     |
+| 2.5 | 删除模板     |                                                  |          |
+| 3   | 制定模板群发   | `https://sms.yunpian.com/v2/sms/multi_send.json` |          |
+| 4   | 查看短信发送记录 | `https://sms.yunpian.com/v2/sms/get_record.json` |          |
+| 7   | 账户信息导出   |     服务端                                      |      |
+
+## 前后端接口格式
+
+```json
+{
+  // 以下内容是 基础参数
+  "username":"用户名",
+  "password":"密码",
+  "request_code":"区分请求，详见文档",
+  // 以下内容是 发送短信 需要的参数
+  "mobile":["1880***1234","1880***2234","1880***3234"], 
+  "param":[["每一个电话对应一个列表"],[""],[""]],
+  "replace":["记录需要替换的内容，与param的列数量一致"],
+  "content":"模板内容，将替换，没有param参数则不替换",
+  "tpl_id":"可选，与上面的选择其一"
+}
+```
 
 ## 一些注意事项
 
