@@ -1,7 +1,6 @@
 "封装对数据库的操作"
 
 import MySQLdb
-import json
 
 
 class databaseIO:
@@ -19,7 +18,8 @@ class databaseIO:
         """
         self.host, self.user, self.passwd, self.db, self.port, self.charset = hostname, user, passwd, db, port, charset
         self.conn = MySQLdb.connect(
-            host=hostname, user=user, passwd=passwd, db=db, port=port, charset=charset)
+            host=hostname, user=user, passwd=passwd,
+            db=db, port=port, charset=charset)
         self.conn.close()
 
     def _connect(self):
@@ -134,13 +134,16 @@ class databaseIO:
 
         cur = self.conn.cursor()
         cur.execute(
-            'select fee,paid,createTime,remark from User where id = %s limit 1', (id,))
+            'select fee,paid,createTime,remark from User \
+             where id = %s limit 1',
+            (id,))
         res = cur.fetchone()
         cur.close()
         self._close()
         return res
 
-    def addUserTpl(self, id: int, tpl_id: int,  text, result, errmsg, status, ifpublic=0, title='', remark=''):
+    def addUserTpl(self, id: int, tpl_id: int,  text, result, errmsg,
+                   status, ifpublic=0, title='', remark=''):
         """
         添加模板，在完成api调用后使用，默认id存在
             :param self: 
@@ -219,7 +222,7 @@ class databaseIO:
         cur.close()
 
         self._close()
-        return res
+        return int(res)
 
     def checkUserBalance(self, id):
         """
@@ -232,7 +235,7 @@ class databaseIO:
 
     def SendSingle(self, id: int, mobile: str, ext, param: list, tpl_id: None, content: str, fee: float, totalCount: int, sid: str, result: int, errmsg: str):
         """
-        发送单条信息后调用
+        发送单条信息后调用,注意：这里插入的extend值就是getHighestextend()的值+1
             :param self: 
             :param id:int: 
             :param mobile:str: 
@@ -246,13 +249,14 @@ class databaseIO:
             :param result:int: 填写
             :param errmsg:str:
         """
+        extend = self.getUserHighestExtend() + 1
         self._connect()
 
         cur = self.conn.cursor()
         res = cur.execute(
-            'Insert into SendStat(id,ext,param,tpl_id,content,fee,count,totalCount,mobile,sid,result,errmsg) ' +
-            'values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
-            (id, ext, str(param), tpl_id, content, fee, 1, totalCount, mobile, sid, result, errmsg))
+            'Insert into SendStat(extend,id,ext,param,tpl_id,content,fee,count,totalCount,mobile,sid,result,errmsg) ' +
+            'values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
+            (extend, id, ext, str(param), tpl_id, content, fee, 1, totalCount, mobile, sid, result, errmsg))
         cur.execute(
             'UPDATE User SET fee=User.fee+%s WHERE id = %s',
             (fee, id)
@@ -282,7 +286,8 @@ class databaseIO:
         cur = self.conn.cursor()
 
         cur.execute(
-            'Insert into SendStat(id,ext,tpl_id,content,fee,count,totalCount) values(%s,%s,%s,%s,%s,%s,%s)',
+            'Insert into SendStat(extend,id,ext,tpl_id,content,fee,count,totalCount)\
+             values(%s,%s,%s,%s,%s,%s,%s,%s)',
             (id, ext, tpl_id, content, fee, len(data_list), totalCount)
         )
         multi_info = [(id, extend, i['mobile'], i['sid'], i['result'], i['fee'], i['errmsg'], i['param']) for i in data_list
@@ -318,13 +323,14 @@ class databaseIO:
         return res
 
 
-if __name__ == '__main__':
-    run = databaseIO('172.17.0.1', 'user', 'password',
-                     db='groupMessage', port=32768)
 
-    # run.InsertUser('wangxie','md5','aaa')
-    # run.InsertUser('shetuan1','md6','bbb')
-    # run.InsertUser('shetuan2','md7','ccc')
+if __name__ == '__main__':
+    run = databaseIO('172.18.0.1', 'root', 'password',
+                     db='groupMessage', port=32778)
+
+    run.InsertUser('wangxie', 'md5', 'aaa')
+    run.InsertUser('shetuan1', 'md6', 'bbb')
+    run.InsertUser('shetuan2', 'md7', 'ccc')
 
     data = [
         dict(code=1, sid=123, mobile='112', fee=0.05, msg='1sda'),
@@ -336,8 +342,8 @@ if __name__ == '__main__':
     # run.addUserPaid(1, 0.04)
     # run.SendSingle(1, '123', '', None, 22433234, '',
     #                0.04, 3, 3, 'aasdf', 1, 'suc')
-    print(run.getUserHighestExtend())
-    print(run.checkUserBalance(1))
-    print(run.isSingle(2))
+    # print(run.getUserHighestExtend())
+    # print(run.checkUserBalance(1))
+    # print(run.isSingle(2))
     # uid = (run.beforeSendSingle(1, '1123', 'hh'))
     # print(run.afterSendSingle(1,uid,0.02,1,2,'saf'))
