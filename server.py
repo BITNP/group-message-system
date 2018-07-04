@@ -48,7 +48,7 @@ def process_resquest(dict_data):
         param要以列表的形式传入（云片网,也就是tpl_value
         """
         response = requests.post(
-            'https://sms.yunpian.com/v2/sms/tpl_batch_send.json', dict_data
+            'https://sms.yunpian.com/v2/sms/multi_send.json', dict_data
         )
         dict_result = response.json()
         print(response.json())

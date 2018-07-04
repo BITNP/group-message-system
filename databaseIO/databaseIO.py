@@ -288,7 +288,7 @@ class databaseIO:
         cur.execute(
             'Insert into SendStat(extend,id,ext,tpl_id,content,fee,count,totalCount)\
              values(%s,%s,%s,%s,%s,%s,%s,%s)',
-            (id, ext, tpl_id, content, fee, len(data_list), totalCount)
+            (extend, id, ext, tpl_id, content, fee, len(data_list), totalCount)
         )
         multi_info = [(id, extend, i['mobile'], i['sid'], i['result'], i['fee'], i['errmsg'], i['param']) for i in data_list
                       ]
@@ -321,7 +321,6 @@ class databaseIO:
 
         self._close()
         return res
-
 
 
 if __name__ == '__main__':
