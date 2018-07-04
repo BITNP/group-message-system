@@ -79,25 +79,20 @@ class databaseIO:
         else:
             return False
 
-    def addReply(self, extend: int, reply: str, mobile: str = None):
+    def addReply(self, extend: int, reply: str, mobile: str):
         """
-        根据参数自动添加回复，如果是单人不需要mobile
+        根据参数自动添加回复，根据extend 和 mobile 确定
             :param self: 
             :param extend:int: 
             :param reply:str: 
             :param mobile:str=None: 
         """
-        isSingle = self.isSingle(extend)
 
         self._connect()
+
         cur = self.conn.cursor()
-        if isSingle:
-            res = cur.execute('UPDATE SendStat SET reply = %s where extend = %s ',
-                              (reply, extend)
-                              )
-        else:
-            res = cur.execute('UPDATE GroupData SET reply = %s where extend = %s and mobile = %s', (reply, extend, mobile)
-                              )
+        res = cur.execute('UPDATE GroupData SET reply = %s where extend = %s and mobile = %s', (reply, extend, mobile)
+                          )
         self.conn.commit()
         cur.close()
 
@@ -233,43 +228,9 @@ class databaseIO:
         fee, paid, *_ = self.getUserInfo(id)
         return fee-paid
 
-    def SendSingle(self, id: int, mobile: str, ext, param: list, tpl_id: None, content: str, fee: float, totalCount: int, sid: str, result: int, errmsg: str):
+    def Send(self, id: int, ext: str, tpl_id: int, content: str, fee: float, totalCount: int, data_list: list):
         """
-        发送单条信息后调用,注意：这里插入的extend值就是getHighestextend()的值+1
-            :param self: 
-            :param id:int: 
-            :param mobile:str: 
-            :param ext: 可空
-            :param param:list: list形式，将转为字符串 
-            :param tpl_id:None: 与后者二选一
-            :param content:str: 
-            :param fee:float: 
-            :param totalCount:int: 
-            :param sid:str: 必填
-            :param result:int: 填写
-            :param errmsg:str:
-        """
-        extend = self.getUserHighestExtend() + 1
-        self._connect()
-
-        cur = self.conn.cursor()
-        res = cur.execute(
-            'Insert into SendStat(extend,id,ext,param,tpl_id,content,fee,count,totalCount,mobile,sid,result,errmsg) ' +
-            'values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
-            (extend, id, ext, str(param), tpl_id, content, fee, 1, totalCount, mobile, sid, result, errmsg))
-        cur.execute(
-            'UPDATE User SET fee=User.fee+%s WHERE id = %s',
-            (fee, id)
-        )
-        self.conn.commit()
-        cur.close()
-
-        self._close()
-        return res  # 返回 uid
-
-    def SendMulti(self, id: int, ext: str, tpl_id: int, content: str, fee: float, totalCount: int, data_list: list):
-        """
-        发送多个后调用
+        发送送后调用，将信息录入数据库
             :param self: 
             :param id:int: 
             :param ext:str: 

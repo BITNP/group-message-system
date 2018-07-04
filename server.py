@@ -31,17 +31,6 @@ def process_resquest(dict_data):
     if code == '4':
         response = requests.post(
             'https://sms.yunpian.com/v2/sms/get_record.json', data=dict_data)
-    elif code == '1':
-        response = requests.post(
-            'https://sms.yunpian.com/v2/sms/single_send.json', data=dict_data
-        )
-        dict_result = response.json()
-        if 'http_status_code' in dict_result:  # api调用正确，但有其他错误
-            return json.dumps(dict_result, ensure_ascii=False)
-        print(dict_result)
-        db.SendSingle(dict_data['id'], dict_data['mobile'], '', [], None, dict_data['text'],
-                      dict_result['fee'], dict_result['count'], dict_result['sid'], dict_result['code'], dict_result['msg'])
-
     elif code == '3':
         """
         注意，mobile要以逗号分割字符串形式传入（仅云片网，
@@ -61,17 +50,6 @@ def process_resquest(dict_data):
 
         db.SendMulti(dict_data['id'], '', dict_data['tpl_id'], '', dict_result['total_fee'],
                      dict_result['total_count'], result_data)
-
-    elif code == '5':
-        response = requests.post(
-            'https://sms.yunpian.com/v2/sms/tpl_batch_send.json', dict_data
-        )
-        dict_result = response.json()
-        if 'http_status_code' in dict_result:  # api调用正确，但有其他错误
-            return json.dumps(dict_result, ensure_ascii=False)
-
-        db.SendSingle(dict_data['id'], dict_data['mobile'], '', [dict_data['tpl_value']], dict_data['tpl_id'], '',
-                      dict_result['total_fee'], dict_result['data'][0]['count'], dict_result['data'][0]['sid'], dict_result['data'][0]['code'], dict_result['data'][0]['msg'])
     elif code == '2.1':
         response = requests.post(
             'https://sms.yunpian.com/v2/tpl/get_default.json', data=dict_data)
@@ -91,7 +69,7 @@ def process_resquest(dict_data):
             result = [result]
         # 下面一条语句起到过滤作用，注意生产环境中要取消注释
         # result = list(filter(lambda x: x['tpl_id'] in tpl_list, result))
-        
+
         return json.dumps(result, ensure_ascii=False)
 
     elif code == '2.3':
@@ -104,13 +82,15 @@ def process_resquest(dict_data):
 
         print(dict_result)
         affect_row_num = db.addUserTpl(
-            dict_data['id'], dict_result['tpl_id'], dict_result['tpl_content'], None, dict_result['check_status'], None)
+            dict_data['id'], dict_result['tpl_id'], dict_result['tpl_content'],
+            None, dict_result['check_status'], None)
         print(affect_row_num)
         return json.dumps(dict_result, ensure_ascii=False)
 
     elif code == '7':
         response = requests.post(
-            'https://sms.yunpian.com/v2/sms/get_total_fee.json', data=dict_data)
+            'https://sms.yunpian.com/v2/sms/get_total_fee.json',
+            data=dict_data)
     else:
         return None
     return response.text

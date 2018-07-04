@@ -98,16 +98,11 @@ GRANT Select,UPDATE ON
 | id         | 区分用户       | INT           |                   | NOT NULL 外键约束                | User表中id                                           |
 | ext        | 保留         | char(32)      |                   |                              | 用户的 session 内容，腾讯 server 回包中会原样返回                  |
 | createTime | 生成时间       | DATETIME      | CURRENT_TIMESTAMP |                              |                                                    |
-| param      | 模板短信的参数    | text(500)     |                   |                              | 不同内容用逗号隔开                                          |
 | tpl_id     | 模板短信的模板id  | BIGINT        |                   |                              |                                                    |
 | content    | 短信内容       | varchar(500)  |                   |                              | 如果没有使用模板发送这个值必填                                    |
 | fee        | 这次花费       | DECIMAL(10,2) | 0.0               | NOT NULL                     |                                                    |
 | count      | 计数         | INT           | 1                 |                              | 后端统计发送的数量，与下面的对照                                   |
 | totalCount | 计数         | INT           | 1                 |                              | api 返回的统计结果，只统计成功的                                 |
-| mobile     | 单个发送中的手机号  | char(11)      |                   |                              |                                                    |
-| sid        | 单个发送中的sid  | char(32)      |                   |                              | 来自api                                              |
-| result     | 单个发送中的发送状态 | int           |                   |                              |                                                    |
-| errmsg     | 单个发送中的信息   | varchar(500)  |                   |                              |                                                    |
 
 `GroupData`
 
@@ -122,8 +117,8 @@ GRANT Select,UPDATE ON
 | mobile     | 手机号        |               |                   |                 |                       |
 | result     | 发送状态（计费依据） | INT           | NULL              |                 | 与api返回值相同 code/result |
 | fee        | 费用         | DECIMAL(10,2) |                   |                 |                       |
-| errmsg     | 单个发送中的信息   | varchar(500)  |                   |                 |                       |
-| reply      | 单个发送的短信回复  | varchar(500)  |                   |                 | 空值则为没有回复              |
+| errmsg     | api回复的信息   | varchar(500)  |                   |                 |                       |
+| reply      | 短信回复  | varchar(500)  |                   |                 | 空值则为没有回复              |
 
 `Tpl`
 
@@ -141,6 +136,7 @@ GRANT Select,UPDATE ON
 | errmsg     |           | varchar(100) |                   |                 | 错误消息，result 非 0 时的具体错误信息  |      |
 | status     | 模板状态      | INT          |                   |                 | Enum{0：已通过, 1：待审核, 2：已拒绝} |      |
 | reply      | 单个发送的短信回复 | varchar(500) |                   |                 | 空值则为没有回复                  |      |
+
 - 数据库生成语句
 
 ```sql
@@ -186,6 +182,16 @@ GRANT Select,UPDATE ON
 | 3   | 制定模板群发   | `https://sms.yunpian.com/v2/sms/tpl_batch_send.json` |                        |
 | 4   | 查看短信发送记录 |                                                      |                        |
 | 7   | 日账单导出    | `https://sms.yunpian.com/v2/sms/get_total_fee.json`  |                        |
+
+## 前后端接口格式
+
+```json
+{
+  "username":"用户名",
+  "password":"密码",
+  "request_code":"区分请求，详见文档",
+}
+```
 
 ## 一些注意事项
 
