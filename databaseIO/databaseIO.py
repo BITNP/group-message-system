@@ -258,6 +258,10 @@ class databaseIO:
             'INSERT into GroupData(id,extend,mobile,sid,result,fee,errmsg,param) values(%s,%s,%s,%s,%s,%s,%s,%s)',
             multi_info
         )
+        cur.execute(
+            'UPDATE User SET fee=User.fee+%s WHERE id = %s',
+            (fee, id)
+        )
         self.conn.commit()
         cur.close()
 

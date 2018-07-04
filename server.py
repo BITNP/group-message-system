@@ -49,7 +49,7 @@ def process_resquest(dict_data):
         text_list = [replaceText(
             dict_data['content'], param, dict_data['replace']) for param in dict_data['param']]
         payload['text'] = ','.join(text_list)
-
+        print(payload)
         response = requests.post(
             'https://sms.yunpian.com/v2/sms/multi_send.json', data=payload
         )
@@ -58,11 +58,11 @@ def process_resquest(dict_data):
         if 'http_status_code' in dict_result:  # api调用正确，但有其他错误
             return json.dumps(dict_result, ensure_ascii=False)
 
-        result_data = [dict(sid=i['sid'], param=str(i), mobile=i['mobile'], result=i['code'], errmsg=i['msg'], fee=i['fee'])
+        result_data = [dict(sid=i['sid'], param=str(j), mobile=i['mobile'], result=i['code'], errmsg=i['msg'], fee=i['fee'])
                        for i, j in zip(dict_result['data'], dict_data['param'])
                        ]
 
-        db.SendMulti(dict_data['id'], '', None, dict_data['content'], dict_result['total_fee'],
+        db.Send(dict_data['id'], '', None, dict_data['content'], dict_result['total_fee'],
                      dict_result['total_count'], result_data)
     elif code == '2.1':
         response = requests.post(
