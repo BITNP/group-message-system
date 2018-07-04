@@ -102,8 +102,8 @@ def process_resquest(dict_data):
         return json.dumps(dict_result, ensure_ascii=False)
 
     elif code == '7':
-        fee, paid, *_ = db.getUserInfo()
-        return json.dumps(dict(fee=fee, paid=paid))
+        fee, paid, *_ = db.getUserInfo(dict_data['id'])
+        return json.dumps(dict(fee=float(fee), paid=float(paid)))
     else:
         return None
     return response.text
