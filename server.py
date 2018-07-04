@@ -26,6 +26,13 @@ start_time = '2018-06-11 00:00:00'
 end_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 
 
+def replaceText(raw_text, replaceTo: list, whereToReplace: list):
+    text = raw_text
+    for i in range(len(whereToReplace)):
+        text = text.replace(whereToReplace[i], replaceTo[i])
+    return text
+
+
 def process_resquest(dict_data):
     code = str(dict_data['request_code'])
     if code == '4':
@@ -36,19 +43,26 @@ def process_resquest(dict_data):
         注意，mobile要以逗号分割字符串形式传入（仅云片网，
         param要以列表的形式传入（云片网,也就是tpl_value
         """
+        payload = dict(apikey=dict_data['apikey'],
+                       mobile=','.join(dict_data['mobile'])
+                       )
+        text_list = [replaceText(
+            dict_data['content'], param, dict_data['replace']) for param in dict_data['param']]
+        payload['text'] = ','.join(text_list)
+
         response = requests.post(
-            'https://sms.yunpian.com/v2/sms/multi_send.json', dict_data
+            'https://sms.yunpian.com/v2/sms/multi_send.json', data=payload
         )
         dict_result = response.json()
         print(response.json())
         if 'http_status_code' in dict_result:  # api调用正确，但有其他错误
             return json.dumps(dict_result, ensure_ascii=False)
 
-        result_data = [dict(sid=i['sid'], param=j, mobile=i['mobile'], result=i['code'], errmsg=i['msg'], fee=i['fee'])
-                       for i, j in zip(dict_result['data'], dict_data['tpl_value'])
+        result_data = [dict(sid=i['sid'], param=str(i), mobile=i['mobile'], result=i['code'], errmsg=i['msg'], fee=i['fee'])
+                       for i, j in zip(dict_result['data'], dict_data['param'])
                        ]
 
-        db.SendMulti(dict_data['id'], '', dict_data['tpl_id'], '', dict_result['total_fee'],
+        db.SendMulti(dict_data['id'], '', None, dict_data['content'], dict_result['total_fee'],
                      dict_result['total_count'], result_data)
     elif code == '2.1':
         response = requests.post(
@@ -88,9 +102,8 @@ def process_resquest(dict_data):
         return json.dumps(dict_result, ensure_ascii=False)
 
     elif code == '7':
-        response = requests.post(
-            'https://sms.yunpian.com/v2/sms/get_total_fee.json',
-            data=dict_data)
+        fee, paid, *_ = db.getUserInfo()
+        return json.dumps(dict(fee=fee, paid=paid))
     else:
         return None
     return response.text
