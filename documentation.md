@@ -174,7 +174,7 @@ GRANT Select,UPDATE ON
 | 值   | 含义       | api                                              | 后端需要做的处理 |
 |-----|----------|--------------------------------------------------|----------|
 | 2.1 | 获取默认模板   |                                                  | ok       |
-| 2.2 | 获取模板     | `https://sms.yunpian.com/v2/tpl/get.json`        | 过滤       |
+| 2.2 | 获取可用模板     | `https://sms.yunpian.com/v2/tpl/get.json`        | 过滤       |
 | 2.3 | 添加模版     | `https://sms.yunpian.com/v2/tpl/add.json`        | 模板格式     |
 | 2.5 | 删除模板     |                                                  |          |
 | 3   | 制定模板群发   | `https://sms.yunpian.com/v2/sms/multi_send.json` |          |
@@ -194,7 +194,9 @@ GRANT Select,UPDATE ON
   "param":[["每一个电话对应一个列表"],[""],[""]],
   "replace":["记录需要替换的内容，与param的列数量一致"],
   "content":"模板内容，将替换，没有param参数则不替换",
-  "tpl_id":"可选，与上面的选择其一"
+  "tpl_id":"可选，与上面的选择其一",
+  // 以下内容是 添加模板 需要的参数
+  "tpl_content":"模板内容",
 }
 ```
 
