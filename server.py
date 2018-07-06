@@ -90,16 +90,16 @@ def process_resquest(dict_data):
         response = requests.post(
             'https://sms.yunpian.com/v2/tpl/add.json', data=dict_data)
         dict_result = response.json()
-
-        if 'http_status_code' in dict_result:  # api调用正确，但有其他错误
-            return json.dumps(dict_result, ensure_ascii=False)
-
         print(dict_result)
+        if 'http_status_code' in dict_result:  # api调用正确，但有其他错误
+            return '{"code":234,"msg":"'+dict_result['detail']+'"}'
+
+
         affect_row_num = db.addUserTpl(
             dict_data['id'], dict_result['tpl_id'], 1, dict_result['tpl_content'],
             None, dict_result['check_status'], None)
         print(affect_row_num)
-        return json.dumps(dict_result, ensure_ascii=False)
+        return '{"success":true}'
 
     elif code == '7':
         fee, paid, *_ = db.getUserInfo(dict_data['id'])
@@ -137,9 +137,10 @@ class MyRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         print(str(self.path), str(self.headers))
         self._set_headers()
-        self.wfile.write("GET request for {}".format(
-            self.path).encode('utf-8'))
-
+        # self.wfile.write("GET request for {}".format(self.path).encode('utf-8'))
+        # 后续可能要使用配置文件
+        json_string = '{"api":["云片网(不支持回复)","腾讯（支持回复）"],"new_qt_version":"0.5.0"}'
+        self.wfile.write(json_string.encode())
     def do_HEAD(self):
         self._set_headers()
 
