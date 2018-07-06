@@ -41,6 +41,7 @@ DROP TABLE IF EXISTS `groupMessage`.`SendStat` ;
 CREATE TABLE IF NOT EXISTS `groupMessage`.`SendStat` (
   `extend` INT NOT NULL AUTO_INCREMENT,
   `id` INT NULL,
+  `api` INT NOT NULL COMMENT '保留\n',
   `ext` CHAR(32) NULL COMMENT '保留\n',
   `createTime` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
   `tpl_id` BIGINT NULL,
@@ -94,6 +95,7 @@ CREATE TABLE IF NOT EXISTS `groupMessage`.`Tpl` (
   `pid` BIGINT NOT NULL AUTO_INCREMENT,
   `id` INT NULL,
   `tpl_id` BIGINT NULL,
+  `api` INT NOT NULL DEFAULT 0,
   `public` INT NULL DEFAULT 0,
   `createTime` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
   `text` VARCHAR(500) NOT NULL,
