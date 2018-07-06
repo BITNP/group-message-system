@@ -252,9 +252,8 @@ class databaseIO:
         self._connect()
 
         cur = self.conn.cursor()
-
         cur.execute(
-            'Insert into SendStat(extend,id,ext，api,tpl_id,content,fee,count,totalCount)\
+            'Insert into SendStat(extend,id,ext,api,tpl_id,content,fee,count,totalCount)\
              values(%s,%s,%s,%s,%s,%s,%s,%s,%s)',
             (extend, id, ext, api, tpl_id, content, fee, len(data_list), totalCount)
         )
@@ -306,7 +305,8 @@ class databaseIO:
         cur.close()
 
         self._close()
-
+        res = [[i[0], i[1].ctime(), i[2], i[3], str(float(i[4])), i[5], i[6]]
+               for i in res]
         return res
 
 
@@ -321,6 +321,14 @@ if __name__ == '__main__':
         pass
     import pprint
     pprint.pprint(run.checkSendResult(1))
+    # run._connect()
+    # cur = run.conn.cursor()
+    # cur.execute('Insert into SendStat(extend,id,ext,api,tpl_id,content,fee,count,totalCount)'+\
+    #          'values(%s,%s,%s,%s,%s,%s,%s,%s,%s)',
+    #          (1, 1, '',1, 2, '【北理网协】测试用', None, 1, 1)
+    #          )
+    # run.conn.commit()
+    # run.conn.close()
     # run.addUserTpl(2,22433234,'hhhh',0,'success',0,ifpublic=0)
     # run.deleteUserTpl(2,2324)
     # run.addUserPaid(1, 0.04)

@@ -82,7 +82,7 @@ def process_resquest(dict_data):
         if isinstance(result, dict):
             result = [result]
         # 下面一条语句起到过滤作用，注意生产环境中要取消注释
-        result = list(filter(lambda x: str(x['tpl_id']) in tpl_list, result))
+        # result = list(filter(lambda x: str(x['tpl_id']) in tpl_list, result))
 
         return json.dumps(result, ensure_ascii=False)
 
@@ -100,7 +100,9 @@ def process_resquest(dict_data):
             None, dict_result['check_status'], None)
         print(affect_row_num)
         return '{"success":true}'
-
+    elif code == '6':
+        res = db.checkSendResult(dict_data['id'])
+        return json.dumps(res)
     elif code == '7':
         fee, paid, *_ = db.getUserInfo(dict_data['id'])
         return json.dumps(dict(fee=float(fee), paid=float(paid)))

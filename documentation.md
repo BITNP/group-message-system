@@ -184,6 +184,7 @@ GRANT Select,UPDATE ON
 | 2.3 | 添加模版     |                                                   | 模板格式     |
 | 2.4 | 制定模板群发   |                                                   |          |
 | 2.5 | 查看短信发送记录 |                                                   | 不在客户端实现  |
+| 6   | 历史记录信息导出 | 服务端                                               |          |
 | 7   | 账户信息导出   | 服务端                                               |          |
 
 ## 前后端接口格式
@@ -257,6 +258,21 @@ GRANT Select,UPDATE ON
     }
   ]
 }
+
+[
+  [
+    "extend",
+    "时间",
+    "mobile",
+    "param",
+    "fee",
+    "errmsg",
+    "reply"
+  ],
+  [
+    //...
+  ]
+]
 
 { // 7 return message
   "fee":1.12,
