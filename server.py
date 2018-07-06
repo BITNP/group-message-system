@@ -35,10 +35,10 @@ def replaceText(raw_text, replaceTo: list, whereToReplace: list):
 
 def process_resquest(dict_data):
     code = str(dict_data['request_code'])
-    if code == '4':
+    if code == '1.5':
         response = requests.post(
             'https://sms.yunpian.com/v2/sms/get_record.json', data=dict_data)
-    elif code == '3':
+    elif code == '1.4':
         """
         注意，mobile要以逗号分割字符串形式传入（仅云片网，
         param要以列表的形式传入（云片网,也就是tpl_value
@@ -62,17 +62,17 @@ def process_resquest(dict_data):
                        for i, j in zip(dict_result['data'], dict_data['param'])
                        ]
 
-        db.Send(dict_data['id'], '', None, dict_data['content'], dict_result['total_fee'],
-                     dict_result['total_count'], result_data)
-    elif code == '2.1':
+        db.Send(dict_data['id'], '', 1, None, dict_data['content'], dict_result['total_fee'],
+                dict_result['total_count'], result_data)
+    elif code == '1.1':
         response = requests.post(
             'https://sms.yunpian.com/v2/tpl/get_default.json', data=dict_data)
-    elif code == '2.2':
+    elif code == '1.2':
         response = requests.post(
             'https://sms.yunpian.com/v2/tpl/get.json', data=dict_data)
         print(response.json())
         # 按照tplIDList 处理 TODO
-        tpl_list = db.getUserTpl(dict_data['id'])
+        tpl_list = db.getUserTpl(dict_data['id'], 1)
         print('数据库中存储的', tpl_list)
         result = response.json()
         # 异常处理
@@ -82,28 +82,30 @@ def process_resquest(dict_data):
         if isinstance(result, dict):
             result = [result]
         # 下面一条语句起到过滤作用，注意生产环境中要取消注释
-        # result = list(filter(lambda x: x['tpl_id'] in tpl_list, result))
+        # result = list(filter(lambda x: str(x['tpl_id']) in tpl_list, result))
 
         return json.dumps(result, ensure_ascii=False)
 
-    elif code == '2.3':
+    elif code == '1.3':
         response = requests.post(
             'https://sms.yunpian.com/v2/tpl/add.json', data=dict_data)
         dict_result = response.json()
-
-        if 'http_status_code' in dict_result:  # api调用正确，但有其他错误
-            return json.dumps(dict_result, ensure_ascii=False)
-
         print(dict_result)
+        if 'http_status_code' in dict_result:  # api调用正确，但有其他错误
+            return '{"code":234,"msg":"'+dict_result['detail']+'"}'
+
+
         affect_row_num = db.addUserTpl(
-            dict_data['id'], dict_result['tpl_id'], dict_result['tpl_content'],
+            dict_data['id'], dict_result['tpl_id'], 1, dict_result['tpl_content'],
             None, dict_result['check_status'], None)
         print(affect_row_num)
-        return json.dumps(dict_result, ensure_ascii=False)
-
+        return '{"success":true}'
+    elif code == '6':
+        res = db.checkSendResult(dict_data['id'])
+        return json.dumps(res)
     elif code == '7':
-        fee, paid, *_ = db.getUserInfo()
-        return json.dumps(dict(fee=fee, paid=paid))
+        fee, paid, *_ = db.getUserInfo(dict_data['id'])
+        return json.dumps(dict(fee=float(fee), paid=float(paid)))
     else:
         return None
     return response.text
@@ -137,9 +139,10 @@ class MyRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         print(str(self.path), str(self.headers))
         self._set_headers()
-        self.wfile.write("GET request for {}".format(
-            self.path).encode('utf-8'))
-
+        # self.wfile.write("GET request for {}".format(self.path).encode('utf-8'))
+        # 后续可能要使用配置文件
+        json_string = '{"api":["云片网(不支持回复)","腾讯（支持回复）"],"new_qt_version":"0.5.0"}'
+        self.wfile.write(json_string.encode())
     def do_HEAD(self):
         self._set_headers()
 
@@ -206,8 +209,12 @@ class MyRequestHandler(BaseHTTPRequestHandler):
 
 
 def run(server_class=HTTPServer, handler_class=MyRequestHandler):
+    """
+    运行监听
+        :param server_class=HTTPServer: 
+        :param handler_class=MyRequestHandler: 
+    """
     httpd = server_class(ADDR, handler_class)
-
     print('waiting for connecting...')
     httpd.serve_forever()
     httpd.server_close()
@@ -219,7 +226,7 @@ def init():
     """
     try:
         db = dbIO.databaseIO('172.18.0.1', 'root',
-                             'password', 'groupMessage', 32768)
+                             'password', 'groupMessage', 32771)
     except MySQLdb.OperationalError as e:
         print('数据库连接失败', e)
         exit(1)
@@ -231,7 +238,4 @@ def init():
 if __name__ == '__main__':
     from sys import argv
     db = init()
-    if len(argv) == 2:
-        run()
-    else:
-        run()
+    run()

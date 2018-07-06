@@ -24,15 +24,7 @@ def update_tpl_from_database(newList,id):
     cur.close()
     return 
 
-update_tpl_from_database('124',1)
+# 测试回滚功能
 
-cur = conn.cursor()
-cur.execute('select * from User where id = 1')
-print(cur.fetchone())
-cur.close()
-
-update_tpl_from_database('123',1)
-cur = conn.cursor()
-cur.execute('select * from User where id = 1')
-print(cur.fetchone())
-cur.close()
+def test():
+    pass

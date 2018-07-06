@@ -1,6 +1,7 @@
 "封装对数据库的操作"
 
 import MySQLdb
+import datetime
 
 
 class databaseIO:
@@ -99,17 +100,18 @@ class databaseIO:
         self._close()
         return res
 
-    def getUserTpl(self, id: int):
+    def getUserTpl(self, id: int, api: int):
         """
         得到以列表形式存储的模板编号
             :param self: 
-            :param id:int: 
+            :param id:int:
+            :param api:int: 区分api
         """
         self._connect()
         cur = self.conn.cursor()
         cur.execute(
-            'select group_concat(tpl_id) from Tpl where (id = %s and public = 0) or public = 1',
-            (id,)
+            'select group_concat(tpl_id) from Tpl where ((id = %s and public = 0) or public = 1) and api = %s',
+            (id, api)
         )
         res = cur.fetchone()
         res = ('',) if res[0] is None else res
@@ -135,15 +137,17 @@ class databaseIO:
         res = cur.fetchone()
         cur.close()
         self._close()
+
         return res
 
-    def addUserTpl(self, id: int, tpl_id: int,  text, result, errmsg,
+    def addUserTpl(self, id: int, tpl_id: int, api: int, text: str, result, errmsg,
                    status, ifpublic=0, title='', remark=''):
         """
         添加模板，在完成api调用后使用，默认id存在
             :param self: 
             :param id:int: 
             :param tpl_id:int: 
+            :param api:int 做api区分
             :param text: 
             :param result: 
             :param errmsg: 
@@ -157,26 +161,27 @@ class databaseIO:
 
         cur = self.conn.cursor()
         res = cur.execute(
-            'INSERT INTO Tpl(id,tpl_id,text,result,errmsg,status,public,title,remark) values(%s,%s,%s,%s,%s,%s,%s,%s,%s)',
-            (id, tpl_id, text, result, errmsg, status, ifpublic, title, remark)
+            'INSERT INTO Tpl(id,tpl_id,api,text,result,errmsg,status,public,title,remark) values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
+            (id, tpl_id, api, text, result, errmsg, status, ifpublic, title, remark)
         )
         self.conn.commit()
         cur.close()
         self._close()
         return res
 
-    def deleteUserTpl(self, id: int, tpl_id: int):
+    def deleteUserTpl(self, id: int, tpl_id: int, api: int):
         """
-        删除tpl_id为tpl_id的行，要同时匹配id
+        删除tpl_id为tpl_id的行，要同时匹配id和api
             :param self:
             :param tpl_id:int:
+            :param api:int 区分
         """
         self._connect()
 
         cur = self.conn.cursor()
         res = cur.execute(
-            'DELETE FROM Tpl where id = %s and tpl_id = %s ',
-            (id, tpl_id)
+            'DELETE FROM Tpl where id = %s and tpl_id = %s and api = %s',
+            (id, tpl_id, api)
         )
         self.conn.commit()
         cur.close()
@@ -205,7 +210,8 @@ class databaseIO:
     def getUserHighestExtend(self):
         """
         获得最大的Extend值
-            :param self: 
+            :param self:
+            :ret:int
         """
         self._connect()
 
@@ -213,10 +219,10 @@ class databaseIO:
         cur.execute(
             'select extend from SendStat order by extend DESC limit 1')
         res = cur.fetchone()
-        res = 0 if res is None else res[0]
         cur.close()
 
         self._close()
+        res = 0 if res is None else res[0]
         return int(res)
 
     def checkUserBalance(self, id):
@@ -228,12 +234,13 @@ class databaseIO:
         fee, paid, *_ = self.getUserInfo(id)
         return fee-paid
 
-    def Send(self, id: int, ext: str, tpl_id: int, content: str, fee: float, totalCount: int, data_list: list):
+    def Send(self, id: int, ext: str, api: int, tpl_id: int, content: str, fee: float, totalCount: int, data_list: list):
         """
         发送送后调用，将信息录入数据库
             :param self: 
             :param id:int: 
             :param ext:str: 
+            :param api:int: 做api区分，标记发个哪个
             :param tpl_id:int:
             :param content:str: 
             :param fee:float: 
@@ -245,11 +252,10 @@ class databaseIO:
         self._connect()
 
         cur = self.conn.cursor()
-
         cur.execute(
-            'Insert into SendStat(extend,id,ext,tpl_id,content,fee,count,totalCount)\
-             values(%s,%s,%s,%s,%s,%s,%s,%s)',
-            (extend, id, ext, tpl_id, content, fee, len(data_list), totalCount)
+            'Insert into SendStat(extend,id,ext,api,tpl_id,content,fee,count,totalCount)\
+             values(%s,%s,%s,%s,%s,%s,%s,%s,%s)',
+            (extend, id, ext, api, tpl_id, content, fee, len(data_list), totalCount)
         )
         multi_info = [(id, extend, i['mobile'], i['sid'], i['result'], i['fee'], i['errmsg'], i['param']) for i in data_list
                       ]
@@ -287,20 +293,42 @@ class databaseIO:
         self._close()
         return res
 
+    def checkSendResult(self, id):
+        self._connect()
+
+        cur = self.conn.cursor()
+        cur.execute(
+            'select extend,createTime,mobile,param,fee,errmsg,reply from GroupData where id = %s',
+            (id,)
+        )
+        res = cur.fetchall()
+        cur.close()
+
+        self._close()
+        res = [[i[0], i[1].ctime(), i[2], i[3], str(float(i[4])), i[5], i[6]]
+               for i in res]
+        return res
+
 
 if __name__ == '__main__':
     run = databaseIO('172.18.0.1', 'root', 'password',
-                     db='groupMessage', port=32768)
-
-    run.InsertUser('wangxie', 'md5', 'aaa')
-    run.InsertUser('shetuan1', 'md6', 'bbb')
-    run.InsertUser('shetuan2', 'md7', 'ccc')
-
-    data = [
-        dict(code=1, sid=123, mobile='112', fee=0.05, msg='1sda'),
-        dict(code=1, sid=1234, mobile='224', fee=0.05, msg='1sdsda'),
-        dict(code=1, sid=1253, mobile='444', fee=0.05, msg='1ssda')
-    ]
+                     db='groupMessage', port=32771)
+    try:
+        run.InsertUser('wangxie', 'md5', 'aaa')
+        run.InsertUser('shetuan1', 'md6', 'bbb')
+        run.InsertUser('shetuan2', 'md7', 'ccc')
+    except:
+        pass
+    import pprint
+    pprint.pprint(run.checkSendResult(1))
+    # run._connect()
+    # cur = run.conn.cursor()
+    # cur.execute('Insert into SendStat(extend,id,ext,api,tpl_id,content,fee,count,totalCount)'+\
+    #          'values(%s,%s,%s,%s,%s,%s,%s,%s,%s)',
+    #          (1, 1, '',1, 2, '【北理网协】测试用', None, 1, 1)
+    #          )
+    # run.conn.commit()
+    # run.conn.close()
     # run.addUserTpl(2,22433234,'hhhh',0,'success',0,ifpublic=0)
     # run.deleteUserTpl(2,2324)
     # run.addUserPaid(1, 0.04)
