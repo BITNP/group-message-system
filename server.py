@@ -56,7 +56,7 @@ def process_resquest(dict_data):
         dict_result = response.json()
         print(response.json())
         if 'http_status_code' in dict_result:  # api调用正确，但有其他错误
-            return json.dumps(dict_result, ensure_ascii=False)
+            return '{"code":234,"msg":"'+dict_result['detail']+'"}'
 
         result_data = [dict(sid=i['sid'], param=str(j), mobile=i['mobile'], result=i['code'], errmsg=i['msg'], fee=i['fee'])
                        for i, j in zip(dict_result['data'], dict_data['param'])
@@ -92,7 +92,7 @@ def process_resquest(dict_data):
         dict_result = response.json()
         print(dict_result)
         if 'http_status_code' in dict_result:  # api调用正确，但有其他错误
-            return '{"code":234,"msg":"'+dict_result['detail']+'"}'
+            return '{"code":233,"msg":"'+dict_result['detail']+'"}'
 
 
         affect_row_num = db.addUserTpl(
@@ -102,7 +102,7 @@ def process_resquest(dict_data):
         return '{"success":true}'
     elif code == '6':
         res = db.checkSendResult(dict_data['id'])
-        return json.dumps(res)
+        return json.dumps(res,ensure_ascii=False)
     elif code == '7':
         fee, paid, *_ = db.getUserInfo(dict_data['id'])
         return json.dumps(dict(fee=float(fee), paid=float(paid)))
@@ -226,7 +226,7 @@ def init():
     """
     try:
         db = dbIO.databaseIO('172.18.0.1', 'root',
-                             'password', 'groupMessage', 32771)
+                             'password', 'groupMessage', 32768)
     except MySQLdb.OperationalError as e:
         print('数据库连接失败', e)
         exit(1)
