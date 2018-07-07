@@ -215,7 +215,7 @@ def run(server_class=HTTPServer, handler_class=MyRequestHandler):
         :param handler_class=MyRequestHandler: 
     """
     httpd = server_class(ADDR, handler_class)
-    print('waiting for connecting...')
+    print('start waiting for connection...')
     httpd.serve_forever()
     httpd.server_close()
 
@@ -226,7 +226,7 @@ def init():
     """
     try:
         db = dbIO.databaseIO('172.18.0.1', 'root',
-                             'password', 'groupMessage', 32768)
+                             'password', 'groupMessage', 32771)
     except MySQLdb.OperationalError as e:
         print('数据库连接失败', e)
         exit(1)
@@ -236,6 +236,5 @@ def init():
 
 
 if __name__ == '__main__':
-    from sys import argv
     db = init()
     run()
