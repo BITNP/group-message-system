@@ -2,7 +2,7 @@
 import sys
 from PyQt5 import QtWidgets
 # test4
-from test4 import Ui_MainWindow
+from frontEnd_qt import Ui_MainWindow
 import xlrd
 import re
 import requests
@@ -168,12 +168,19 @@ class my_win(Ui_MainWindow):
                             response.json()['new_qt_version'])
                         string = '{"username":"'+self.username + \
                             '","password":"'+self.password+'","request_code":7}'
+                        print(string)
                         response = requests.post(
                             self.url, data=string.encode())
                     except:
-                        self.statusLineWords[0] = '[服务器通信异常] 请联系管理员'
+                        self.statusLineWords[0] = '[服务器通信异常] 连接中断'
                     else:
-                        response_dict = response.json()
+                        try:
+                            response_dict = response.json()
+                        except:
+                            print(response)
+                            self.statusLineWords[0] = '[服务器通信异常] 请联系管理员'
+                            self.updateStatueLine(0)
+                            return
                         if 'code' in response_dict and response_dict['code'] != 252:
                             words = '[通信接口有误] '+response.text
                         elif 'code' in response_dict:
@@ -214,9 +221,7 @@ class my_win(Ui_MainWindow):
         return res
 
     def checkNetworkCondition(self, addition=''):
-        print('aa')
         if self.updateStatueLine(1) & 1:
-            print('bb')
             request_code = str(self.apiChosen)+'.2'
             string = '{"username":"'+self.username + \
                 '","password":"'+self.password+'","request_code":'+request_code+'}'

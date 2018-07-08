@@ -3,6 +3,7 @@ import time
 import json
 import requests
 import MySQLdb
+import os
 import hashlib
 import databaseIO.databaseIO as dbIO
 
@@ -19,11 +20,24 @@ ADDR = (HOST, PORT)
 # X-Powered-By-360WZB: wangzhan.360.cn
 # ETag: "5a7e7448-1df"
 # WZWS-RAY: 114-1530315201.377-s9lfyc2
+try:
+    with open('config.json') as f:
+        config_dict = json.load(f)
+except:
+    print('读取 config.json 失败,请正确配置')
+    exit(1)
+apikey = os.getenv('YUNPIAN_APIKEY') or config_dict['yunpian']['apikey']
+# DBHOSTNAME, DBUSERNAME,
+                    #  DBPASSWORD, DBDBNAME, DBPORT
+DBHOSTNAME = os.getenv('DB_HOSTNAME') or config_dict['databaseIO']['host']
+DBUSERNAME = os.getenv('DB_USERNAME') or config_dict['databaseIO']['username']
+DBPASSWORD = os.getenv('DB_PASSWORD') or config_dict['databaseIO']['password']
+DBDB = os.getenv('DB_DB') or config_dict['databaseIO']['db']
+DBPORT = os.getenv('DB_PORT') or config_dict['databaseIO']['port']
 
-with open('config.json') as f:
-    apikey = json.load(f)['apikey']
-start_time = '2018-06-11 00:00:00'
-end_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+
+# start_time = '2018-06-11 00:00:00'
+# end_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 
 
 def replaceText(raw_text, replaceTo: list, whereToReplace: list):
@@ -127,6 +141,21 @@ class MyRequestHandler(BaseHTTPRequestHandler):
             self.send_header('Content-type', 'application/json')
             self.end_headers()
 
+    def process_json(self,raw_data):
+        try:
+            dict_data = json.loads(raw_data.decode('utf-8'))
+        except:
+            self._set_headers(False)
+            # 异常处理 TODO
+            
+            print('=='*10,'\n'+raw_data.decode('utf-8')+'\n','=='*10)
+            json.loads(raw_data)
+            return None, False
+        else:
+            dict_data.update(
+                dict(apikey=apikey))
+        return dict_data, True
+
     def _check_dict(self, data: dict, *args):
         for i_str in args:
             if i_str not in data:
@@ -148,17 +177,6 @@ class MyRequestHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
 
-        def process_json(raw_data):
-            try:
-                dict_data = json.loads(raw_data)
-            except:
-                self._set_headers(False)
-                # 异常处理 TODO
-                return None, False
-            else:
-                dict_data.update(
-                    dict(apikey=apikey, start_time=start_time, end_time=end_time))
-            return dict_data, True
 
         # Doesn't do anything with posted data
 
@@ -167,7 +185,7 @@ class MyRequestHandler(BaseHTTPRequestHandler):
         content_length = int(self.headers['Content-Length'])
         # <--- Gets the data itself
         post_data = self.rfile.read(content_length)
-        dict_data, status = process_json(post_data)
+        dict_data, status = self.process_json(post_data)
 
         if not status:
             self.wfile.write('{"code":250,"msg":"非json格式"}'.encode('utf-8'))
@@ -225,8 +243,8 @@ def init():
     初始化数据库
     """
     try:
-        db = dbIO.databaseIO('172.18.0.1', 'root',
-                             'password', 'groupMessage', 32771)
+        db = dbIO.databaseIO(DBHOSTNAME, DBUSERNAME,
+                             DBPASSWORD, DBDB, DBPORT)
     except MySQLdb.OperationalError as e:
         print('数据库连接失败', e)
         exit(1)
