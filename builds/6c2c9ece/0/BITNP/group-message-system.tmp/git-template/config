@@ -1,0 +1,4 @@
+[fetch]
+	recurseSubmodules = false
+[http "https://git.bitnp.net"]
+	sslCAInfo = /home/fky/code/git/group-message-system/builds/6c2c9ece/0/BITNP/group-message-system.tmp/CI_SERVER_TLS_CA_FILE
