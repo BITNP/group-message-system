@@ -3,13 +3,13 @@ stages:
   - deploy
 job1:
   tags: 
-    - docker
+    - shell
   stage: build
   script:
     - echo 1
 job2:
   tags: 
-    - docker
+    - shell
   stage: deploy
   script:
     - echo 2
