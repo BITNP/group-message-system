@@ -2,12 +2,14 @@ stages:
   - build
   - deploy
 job1:
-  tag: docker
+  tags: 
+    - docker
   stage: build
   script:
     - echo 1
 job2:
-  tag: docker
+  tags: 
+    - docker
   stage: deploy
   script:
     - echo 2
