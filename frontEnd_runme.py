@@ -8,7 +8,7 @@ import requests
 import json
 import csv
 
-VERSION = "0.5.0"
+VERSION = "1.0.0"
 
 try:
     with open('config.json') as f:

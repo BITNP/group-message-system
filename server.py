@@ -28,13 +28,15 @@ except:
     exit(1)
 apikey = os.getenv('YUNPIAN_APIKEY') or config_dict['yunpian']['apikey']
 # DBHOSTNAME, DBUSERNAME,
-                    #  DBPASSWORD, DBDBNAME, DBPORT
+#  DBPASSWORD, DBDBNAME, DBPORT
 DBHOSTNAME = os.getenv('DB_HOSTNAME') or config_dict['databaseIO']['host']
 DBUSERNAME = os.getenv('DB_USERNAME') or config_dict['databaseIO']['username']
 DBPASSWORD = os.getenv('DB_PASSWORD') or config_dict['databaseIO']['password']
 DBDB = os.getenv('DB_DB') or config_dict['databaseIO']['db']
 DBPORT = os.getenv('DB_PORT') or config_dict['databaseIO']['port']
 PORT = os.getenv('SERVER_PORT')or config_dict['server_port']
+LATEST_QT_VERSION = os.getenv(
+    'LATEST_QT_VERSION')or config_dict['latest_qt_version'] or '0.0.0'
 
 
 # start_time = '2018-06-11 00:00:00'
@@ -109,7 +111,6 @@ def process_resquest(dict_data):
         if 'http_status_code' in dict_result:  # api调用正确，但有其他错误
             return '{"code":233,"msg":"'+dict_result['detail']+'"}'
 
-
         affect_row_num = db.addUserTpl(
             dict_data['id'], dict_result['tpl_id'], 1, dict_result['tpl_content'],
             None, dict_result['check_status'], None)
@@ -117,7 +118,7 @@ def process_resquest(dict_data):
         return '{"success":true}'
     elif code == '6':
         res = db.checkSendResult(dict_data['id'])
-        return json.dumps(res,ensure_ascii=False)
+        return json.dumps(res, ensure_ascii=False)
     elif code == '7':
         fee, paid, *_ = db.getUserInfo(dict_data['id'])
         return json.dumps(dict(fee=float(fee), paid=float(paid)))
@@ -142,14 +143,14 @@ class MyRequestHandler(BaseHTTPRequestHandler):
             self.send_header('Content-type', 'application/json')
             self.end_headers()
 
-    def process_json(self,raw_data):
+    def process_json(self, raw_data):
         try:
             dict_data = json.loads(raw_data.decode('utf-8'))
         except:
             self._set_headers(False)
             # 异常处理 TODO
-            
-            print('=='*10,'\n'+raw_data.decode('utf-8')+'\n','=='*10)
+
+            print('=='*10, '\n'+raw_data.decode('utf-8')+'\n', '=='*10)
             json.loads(raw_data)
             return None, False
         else:
@@ -171,13 +172,14 @@ class MyRequestHandler(BaseHTTPRequestHandler):
         self._set_headers()
         # self.wfile.write("GET request for {}".format(self.path).encode('utf-8'))
         # 后续可能要使用配置文件
-        json_string = '{"api":["云片网(不支持回复)","腾讯（支持回复）"],"new_qt_version":"0.5.0"}'
+        json_string = '{"api":["云片网(不支持回复)","腾讯（支持回复）"],"new_qt_version":"' + \
+            LATEST_QT_VERSION+'"}'
         self.wfile.write(json_string.encode())
+
     def do_HEAD(self):
         self._set_headers()
 
     def do_POST(self):
-
 
         # Doesn't do anything with posted data
 
