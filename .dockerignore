@@ -4,3 +4,4 @@ database_design/*
 *.md
 frontend*
 *.sh
+.gitlab-ci.yml
