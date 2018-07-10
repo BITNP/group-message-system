@@ -11,6 +11,11 @@ import csv
 
 VERSION = "0.5.0"
 
+with open('config.json') as f:
+    config_info = json.load(f)
+    URL = config_info['server_url'] if 'server_url' in config_info else 'http://localhost:29999'
+    UNAME = config_info['username'] if 'username' in config_info else ''
+    PWORD = config_info['password'] if 'password' in config_info else ''
 
 def ifHasUpdate(new_version):
     if list(map(lambda x: int(x), VERSION.split('.'))) < list(map(lambda x: int(x), new_version.split('.'))):
@@ -129,9 +134,9 @@ class my_win(Ui_MainWindow):
         self.lineEdit.setFocus()
         MainWindow.showMaximized()
 
-        self.url = 'http://localhost:29999'
-        self.username = 'wangxie'
-        self.password = "md5"
+        self.url = URL
+        self.username = UNAME
+        self.password = PWORD
         self.ifLogin = False
         self.tplChosen = 0
         self.sheetncols = 0

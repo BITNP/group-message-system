@@ -34,6 +34,7 @@ DBUSERNAME = os.getenv('DB_USERNAME') or config_dict['databaseIO']['username']
 DBPASSWORD = os.getenv('DB_PASSWORD') or config_dict['databaseIO']['password']
 DBDB = os.getenv('DB_DB') or config_dict['databaseIO']['db']
 DBPORT = os.getenv('DB_PORT') or config_dict['databaseIO']['port']
+PORT = os.getenv('SERVER_PORT')or config_dict['server_port']
 
 
 # start_time = '2018-06-11 00:00:00'
