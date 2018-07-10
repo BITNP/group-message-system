@@ -1,25 +1,47 @@
+# This file is a template, and might need editing before it works on your project.
+# Official docker image.
 image: docker:latest
 
-stages:
-  - build
-  - deploy
+services:
+  - docker:dind
 
 variables:
   IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
   RELEASE_TAG: $CI_REGISTRY_IMAGE:latest
 
-job1:
-  tags: 
-    - docker
+before_script:
+  - docker info
+  - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+
+stages:
+  - build
+  - test
+  - release
+
+build-image:
   stage: build
   script:
     - docker build -t $IMAGE_TAG .
+    - docker push $IMAGE_TAG
 
-job2:
-  tags: 
-    - shell
-  stage: deploy
+test-image:
+  stage: test
   script:
-    - echo $IMAGE_TAG
-    - echo $RELEASE_TAG
-    - docker info
+    - docker pull $IMAGE_TAG
+    - docker run -d --name track2es $IMAGE_TAG
+    - sleep 5
+    - 'if docker ps --all | grep track2es | grep "Stop\|Restart"; then exit 1; fi'
+    - 'if docker logs track2es | grep "Traceback"; then exit 1; fi'
+    - docker logs track2es
+  after_script:
+    - docker stop track2es
+    - docker rm track2es
+
+release-image:
+  stage: release
+  script:
+    - docker pull $IMAGE_TAG
+    - docker tag $IMAGE_TAG $RELEASE_TAG
+    - docker push $RELEASE_TAG
+  only:
+    - master
