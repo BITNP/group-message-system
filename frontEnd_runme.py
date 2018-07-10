@@ -1,7 +1,6 @@
 # 可以直接根据xml运行代码，便于快速迭代开发
 import sys
 from PyQt5 import QtWidgets
-# test4
 from frontEnd_qt import Ui_MainWindow
 import xlrd
 import re
@@ -11,11 +10,14 @@ import csv
 
 VERSION = "0.5.0"
 
-with open('config.json') as f:
-    config_info = json.load(f)
-    URL = config_info['server_url'] if 'server_url' in config_info else 'http://localhost:29999'
-    UNAME = config_info['username'] if 'username' in config_info else ''
-    PWORD = config_info['password'] if 'password' in config_info else ''
+try:
+    with open('config.json') as f:
+        config_info = json.load(f)
+except:
+    print('未能读取config.json')
+URL = config_info['server_url'] if 'server_url' in config_info else 'http://localhost:29999'
+UNAME = config_info['username'] if 'username' in config_info else ''
+PWORD = config_info['password'] if 'password' in config_info else ''
 
 def ifHasUpdate(new_version):
     if list(map(lambda x: int(x), VERSION.split('.'))) < list(map(lambda x: int(x), new_version.split('.'))):
