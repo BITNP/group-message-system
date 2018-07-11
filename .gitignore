@@ -3,4 +3,4 @@
 *.pyc
 .vscode/*
 .gitlab-ci.yml
-/release
+*/release

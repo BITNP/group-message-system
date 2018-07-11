@@ -1,7 +1,0 @@
-database_design/*
-.vscode/*
-.gitignore
-*.md
-frontend*
-*.sh
-.gitlab-ci.yml
