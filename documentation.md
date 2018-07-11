@@ -286,6 +286,7 @@ GRANT Select,UPDATE ON
 - 传送中文时要指明使用`.encode()`
 - 若传入是json但是不是字典呢？
 - 注意数据库要正确设置时区
+- 使用pyinstaller在win平台下编译的时候需要`from PyQt5 import sip`
 
 ## 项目进度
 

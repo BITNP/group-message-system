@@ -9,7 +9,7 @@ import json
 import csv
 
 VERSION = "1.0.0"
-
+config_info = {}
 try:
     with open('config.json') as f:
         config_info = json.load(f)
