@@ -99,7 +99,7 @@ def process_resquest(dict_data):
         if isinstance(result, dict):
             result = [result]
         # 下面一条语句起到过滤作用，注意生产环境中要取消注释
-        # result = list(filter(lambda x: str(x['tpl_id']) in tpl_list, result))
+        result = list(filter(lambda x: str(x['tpl_id']) in tpl_list, result))
 
         return json.dumps(result, ensure_ascii=False)
 
@@ -246,8 +246,10 @@ def init():
     初始化数据库
     """
     try:
+        print(DBHOSTNAME, DBUSERNAME,
+                             DBPASSWORD, DBDB, int(DBPORT))
         db = dbIO.databaseIO(DBHOSTNAME, DBUSERNAME,
-                             DBPASSWORD, DBDB, DBPORT)
+                             DBPASSWORD, DBDB, int(DBPORT))
     except MySQLdb.OperationalError as e:
         print('数据库连接失败', e)
         exit(1)
@@ -257,5 +259,6 @@ def init():
 
 
 if __name__ == '__main__':
+    time.sleep(7)
     db = init()
     run()

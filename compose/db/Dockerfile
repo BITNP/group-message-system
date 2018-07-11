@@ -10,4 +10,6 @@ COPY privileges.sql createdatabase.sql $SCRIPT_PATH/
 COPY setup.sh /docker-entrypoint-initdb.d/
 RUN chmod a+x /docker-entrypoint-initdb.d/setup.sh
 
-CMD ["sh","/mysql/setup.sh"]
+ENTRYPOINT ["docker-entrypoint.sh"]
+EXPOSE 3306
+CMD ["mysqld"]

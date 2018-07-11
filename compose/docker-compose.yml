@@ -2,4 +2,22 @@ version: "2.2"
 services:
   server:
     build: ./server
+    depends_on:
+      - maria
+    environment:
+      DB_HOSTNAME: maria
+      DB_USERNAME: root
+      DB_PASSWORD: password
+      DB_DB: groupMessage
+      DB_PORT: 3306
+      SERVER_PORT: 29999
+    volumes:
+      - ./config.json:/config.json:ro
+    ports:
+      - "29999:29999"
   maria:
+    build: ./db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+

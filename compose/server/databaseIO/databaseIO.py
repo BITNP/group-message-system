@@ -311,8 +311,8 @@ class databaseIO:
 
 
 if __name__ == '__main__':
-    run = databaseIO('172.18.0.1', 'root', 'password',
-                     db='groupMessage', port=32768)
+    run = databaseIO('maria', 'root', 'password',
+                     db='groupMessage', port=3306)
     try:
         run.InsertUser('wangxie', 'md5', 'aaa')
         run.InsertUser('shetuan1', 'md6', 'bbb')
