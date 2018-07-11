@@ -8,3 +8,5 @@ cp BackEnd/requirements.txt BackEnd/server.py compose/server
 cp BackEnd/config.json compose
 
 cp FrontEnd/frontEnd_qt.py FrontEnd/frontEnd_runme.py FrontEnd/release/
+
+rm -r `ls -R | grep __pycache__`
