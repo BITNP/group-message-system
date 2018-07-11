@@ -9,3 +9,4 @@
 */release/*.spec
 *release/build*
 *release/dist*
+*/release/*
