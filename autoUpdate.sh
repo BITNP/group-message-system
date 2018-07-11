@@ -6,3 +6,5 @@ cp database_design/privileges.sql compose/db/privileges.sql
 cp -r BackEnd/databaseIO compose/server/
 cp BackEnd/requirements.txt BackEnd/server.py compose/server
 cp BackEnd/config.json compose
+
+cp FrontEnd/frontEnd_qt.py FrontEnd/frontEnd_runme.py FrontEnd/release/
