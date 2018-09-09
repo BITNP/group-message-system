@@ -4,6 +4,7 @@ services:
     build: ./server
     depends_on:
       - maria
+    restart: always
     environment:
       DB_HOSTNAME: maria
       DB_USERNAME: root
