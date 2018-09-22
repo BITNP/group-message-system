@@ -60,27 +60,63 @@ def process_resquest(dict_data):
         注意，mobile要以逗号分割字符串形式传入（仅云片网，
         param要以列表的形式传入（云片网,也就是tpl_value
         """
-        payload = dict(apikey=dict_data['apikey'],
-                       mobile=','.join(dict_data['mobile'])
-                       )
+        payload_list = []
         text_list = [replaceText(
-            dict_data['content'], param, dict_data['replace']) for param in dict_data['param']]
-        payload['text'] = ','.join(text_list)
-        print(payload)
-        response = requests.post(
-            'https://sms.yunpian.com/v2/sms/multi_send.json', data=payload
-        )
-        dict_result = response.json()
-        print(response.json())
-        if 'http_status_code' in dict_result:  # api调用正确，但有其他错误
-            return '{"code":234,"msg":"'+dict_result['detail']+'"}'
+            dict_data['content'], param, dict_data['replace']) for param
+            in dict_data['param']]
+        print('HERE')
+        for mobile, text in zip(dict_data['mobile'], text_list):
+            payload_list.append(dict(apikey=dict_data['apikey'],
+                                     mobile=mobile,
+                                     text=text)
+                                )
+            # payload = dict(apikey=dict_data['apikey'],
+            #                mobile=','.join(dict_data['mobile'])
+            #                )
+            # text_list = [replaceText(
+            #     dict_data['content'], param, dict_data['replace']) for param in dict_data['param']]
+            # payload['text'] = ','.join(text_list)
+        print(payload_list)
+        dict_result = dict(total_count=0, total_fee=0.00, unit="RMB", data=[])
+        for payload in payload_list:
+            time.sleep(0.1)
+            response = requests.post(
+                'https://sms.yunpian.com/v2/sms/single_send.json', data=payload
+            )
+        # response = requests.post(
+        #     'https://sms.yunpian.com/v2/sms/multi_send.json', data=payload
+        # )
+            result = response.json()
+            # 异常处理
+            print(response.json())
+            if 'http_status_code' in result:  # api调用正确，但有其他错误
+                # 直接添加一条失败记录到结果中
+                # 注意， 这个属于异常错误，并非超过字数限制之类的错误
+                dict_result['data'].append(dict(
+                    code=1,
+                    msg=result['detail'],
+                    count=0,
+                    fee=0.0,
+                    unit="RMB",
+                    mobile=payload['mobile'],
+                    sid=10101010101
+                ))
+                print('api调用正确，但有其他错误', payload, result)
+                continue
+                return '{"code":234,"msg":"'+result['detail']+'"}'
+            #
+            dict_result['data'].append(result)
+            dict_result['total_count'] += 1
+            dict_result['total_fee'] += result['fee']
 
-        result_data = [dict(sid=i['sid'], param=str(j), mobile=i['mobile'], result=i['code'], errmsg=i['msg'], fee=i['fee'])
+        result_data = [dict(sid=i['sid'], param=str(j), mobile=i['mobile'],
+                            result=i['code'], errmsg=i['msg'], fee=i['fee'])
                        for i, j in zip(dict_result['data'], dict_data['param'])
                        ]
 
-        db.Send(dict_data['id'], '', 1, None, dict_data['content'], dict_result['total_fee'],
-                dict_result['total_count'], result_data)
+        db.Send(dict_data['id'], '', 1, None, dict_data['content'],
+                dict_result['total_fee'], dict_result['total_count'], result_data)
+        return json.dumps(dict_result, ensure_ascii=False)
     elif code == '1.1':
         response = requests.post(
             'https://sms.yunpian.com/v2/tpl/get_default.json', data=dict_data)
@@ -247,7 +283,7 @@ def init():
     """
     try:
         print(DBHOSTNAME, DBUSERNAME,
-                             DBPASSWORD, DBDB, int(DBPORT))
+              DBPASSWORD, DBDB, int(DBPORT))
         db = dbIO.databaseIO(DBHOSTNAME, DBUSERNAME,
                              DBPASSWORD, DBDB, int(DBPORT))
     except MySQLdb.OperationalError as e:
