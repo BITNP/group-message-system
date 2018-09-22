@@ -21,4 +21,9 @@ services:
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: password
+    volumes:
+    - groupMessageSystemMySQL:/var/lib/mysql
+
+volumes:
+  groupMessageSystemMySQL:
 
